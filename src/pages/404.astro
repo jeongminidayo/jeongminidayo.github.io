@@ -1,0 +1,11 @@
+---
+import Desktop from '../layouts/Desktop.astro';
+import Window from '../components/Window.astro';
+---
+
+<Desktop title="없는 주소">
+  <Window id="missing" title="없는 주소" open x={150} y={76} w={380}>
+    <p style="padding-top:10px">이 주소에는 아무것도 없습니다.</p>
+    <div class="win-foot"><a href="/">바탕화면으로</a></div>
+  </Window>
+</Desktop>

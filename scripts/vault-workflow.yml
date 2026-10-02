@@ -1,0 +1,47 @@
+# 이 파일은 세컨브레인 저장소(.github/workflows/publish-site.yml)에 넣어 쓴다.
+# 6_발행 폴더가 바뀌면 `공개: true`인 것만 골라 사이트 저장소로 밀어 넣는다.
+# 열쇠(SITE_DEPLOY_KEY)는 사이트 저장소에만 쓸 수 있고, 사이트 쪽에서는 세컨브레인을 읽을 수 없다.
+name: 홈페이지로 내보내기
+
+on:
+  push:
+    branches: [main]
+    paths: ['6_발행/**']
+  workflow_dispatch:
+
+concurrency:
+  group: publish-site
+  cancel-in-progress: false
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 세컨브레인에서 6_발행만 받기
+        uses: actions/checkout@v4
+        with:
+          path: vault
+          sparse-checkout: 6_발행
+      - name: 사이트 저장소 받기
+        uses: actions/checkout@v4
+        with:
+          repository: jeongminidayo/jeongminidayo.github.io
+          ssh-key: ${{ secrets.SITE_DEPLOY_KEY }}
+          path: site
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 공개 표시된 것만 옮기기
+        run: node site/scripts/export.mjs "vault/6_발행" site
+      - name: 바뀐 게 있으면 사이트 저장소에 올리기
+        working-directory: site
+        run: |
+          git config user.name "secondbrain-publish"
+          git config user.email "noreply@users.noreply.github.com"
+          git add -A content public/attachments
+          if git diff --cached --quiet; then
+            echo "바뀐 것 없음"
+          else
+            git commit -m "세컨브레인 6_발행 반영"
+            git push
+          fi

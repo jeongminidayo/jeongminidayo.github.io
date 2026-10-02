@@ -1,0 +1,12 @@
+---
+// "만든 것"은 첫 완성물이 생겼을 때만 주소가 생긴다.
+import Desktop from '../layouts/Desktop.astro';
+import { getListed } from '../lib/data';
+
+export async function getStaticPaths() {
+  const works = await getListed('works');
+  return works.length > 0 ? [{ params: { section: 'works' } }] : [];
+}
+---
+
+<Desktop title="만든 것" open={['works']} />

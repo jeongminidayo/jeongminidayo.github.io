@@ -1,0 +1,52 @@
+---
+import { render } from 'astro:content';
+import Desktop from '../../layouts/Desktop.astro';
+import Window from '../../components/Window.astro';
+import { getPosts, fmt } from '../../lib/data';
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  return posts.map((post, i) => ({
+    params: { slug: post.data.slug },
+    // 목록이 최신순이라 앞 칸이 다음 글, 뒤 칸이 이전 글이다.
+    props: { post, newer: posts[i - 1], older: posts[i + 1] },
+  }));
+}
+
+const { post, newer, older } = Astro.props;
+const { Content } = await render(post);
+---
+
+<Desktop title={post.data.title} description={post.data.summary || undefined} ogType="article">
+  <Window id="post" title="글" open sheet closeHref="/">
+    <article data-pagefind-body>
+      <p class="post-meta" data-pagefind-ignore>
+        {[post.data.kind, fmt(post.data.date)].filter(Boolean).join(' · ')}
+      </p>
+      <h1 class="post-title">{post.data.title}</h1>
+      <div class="prose"><Content /></div>
+    </article>
+    {
+      (older || newer) && (
+        <nav class="post-nav" aria-label="앞뒤 글">
+          <div>
+            {older && (
+              <a href={`/posts/${older.data.slug}/`}>
+                <span>이전 글</span>
+                {older.data.title}
+              </a>
+            )}
+          </div>
+          <div class="next">
+            {newer && (
+              <a href={`/posts/${newer.data.slug}/`}>
+                <span>다음 글</span>
+                {newer.data.title}
+              </a>
+            )}
+          </div>
+        </nav>
+      )
+    }
+  </Window>
+</Desktop>

@@ -1,0 +1,37 @@
+---
+// 창 하나. 제목줄을 잡고 끌 수 있고(Desktop.astro의 스크립트), sheet는 글 한 편용 고정 창이다.
+interface Props {
+  id: string;
+  title: string;
+  open?: boolean;
+  x?: number;
+  y?: number;
+  w?: number;
+  /** 창 높이 한도(px). 안 주면 화면 높이까지. */
+  h?: number;
+  sheet?: boolean;
+  closeHref?: string;
+}
+const { id, title, open = false, x = 150, y = 76, w = 440, h, sheet = false, closeHref } = Astro.props;
+---
+
+<section
+  class:list={['win', { sheet }]}
+  data-win={id}
+  hidden={!open}
+  style={sheet ? undefined : `--x:${x}px;--y:${y}px;--w:${w}px` + (h ? `;--h:${h}px` : '')}
+  aria-label={title}
+>
+  <div class="win-bar">
+    {
+      closeHref ? (
+        <a class="win-x" href={closeHref} aria-label="닫고 바탕화면으로" />
+      ) : (
+        <button type="button" class="win-x" aria-label={`${title} 창 닫기`} />
+      )
+    }
+    <span>{title}</span>
+    <span></span>
+  </div>
+  <div class="win-in"><slot /></div>
+</section>
