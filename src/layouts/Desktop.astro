@@ -22,6 +22,8 @@ const works = await getListed('works');
 const lectures = getLectures();
 const kinds = [...new Set(posts.map((p) => p.data.kind).filter(Boolean))];
 
+// 글이 아직 없으면 강의 창이 글 창 자리(왼쪽 위)를 쓴다.
+const noPosts = posts.length === 0;
 const opened = open === 'home' ? [posts.length ? 'posts' : 'lectures', 'about'] : open;
 const isOpen = (id: string) => opened.includes(id);
 // 창 하나만 열린 페이지에서는 그 창을 가운데 자리에 크게 둔다.
@@ -108,7 +110,7 @@ const ogImage = new URL('/og.png', Astro.site);
       <main>
         <slot />
 
-        <Window id="posts" title="글" open={isOpen('posts')} {...place('posts', 150, 76, 480, 340)}>
+        <Window id="posts" title="글" open={isOpen('posts')} {...place('posts', 150, 76, 480, 372)}>
           {
             kinds.length > 1 && (
               <div class="chips" role="group" aria-label="분류로 거르기">
@@ -138,7 +140,7 @@ const ogImage = new URL('/og.png', Astro.site);
           </div>
         </Window>
 
-        <Window id="about" title="소개" open={isOpen('about')} {...place('about', 660, 440, 400)}>
+        <Window id="about" title="소개" open={isOpen('about')} {...place('about', 660, noPosts ? 76 : 470, 400)}>
           <div class="about">
             {paragraphs.map((p) => <p>{p}</p>)}
             {
@@ -160,7 +162,7 @@ const ogImage = new URL('/og.png', Astro.site);
           </div>
         </Window>
 
-        <Window id="lectures" title="강의" open={isOpen('lectures')} {...place('lectures', 660, 76, 400, 340)}>
+        <Window id="lectures" title="강의" open={isOpen('lectures')} {...place('lectures', noPosts ? 150 : 660, 76, noPosts ? 480 : 400, 372)}>
           <ul class="rows">
             {
               lectures.rows.map((l) => (
@@ -176,7 +178,7 @@ const ogImage = new URL('/og.png', Astro.site);
           </ul>
         </Window>
 
-        <Window id="files" title="자료실" open={isOpen('files')} {...place('files', 150, 440, 480, 300)}>
+        <Window id="files" title="자료실" open={isOpen('files')} {...place('files', 150, 470, 480, 300)}>
           <ul class="rows">
             {
               files.map((f) => (
