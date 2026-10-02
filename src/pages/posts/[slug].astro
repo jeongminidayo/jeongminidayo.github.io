@@ -17,7 +17,7 @@ const { post, newer, older } = Astro.props;
 const { Content } = await render(post);
 ---
 
-<Desktop title={post.data.title} description={post.data.summary || undefined} ogType="article">
+<Desktop title={post.data.title} description={post.data.summary || undefined} ogType="article" widget={false}>
   <Window id="post" title="글" open sheet closeHref="/">
     <article data-pagefind-body>
       <p class="post-meta" data-pagefind-ignore>

@@ -231,7 +231,7 @@ button {
 /* ── 창 ── */
 .win {
   position: absolute;
-  left: calc(max(16px, (100% - 920px) / 2) + var(--x, 0px));
+  left: calc(max(16px, (100% - 960px) / 2) + var(--x, 0px));
   top: var(--y, 60px);
   width: var(--w, 440px);
   max-width: calc(100vw - 24px);
@@ -346,6 +346,154 @@ button {
 }
 .win.max .rz {
   display: none;
+}
+
+/* ── 바탕화면 프로필 카드: 창이 아니라 바탕에 붙어 있다 ── */
+.widget {
+  position: absolute;
+  left: calc(max(16px, (100% - 960px) / 2) + 600px);
+  top: 58px;
+  z-index: 2;
+  width: 360px;
+  padding: 20px 22px 22px;
+  border: 1px solid var(--glass-edge);
+  border-radius: 22px;
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  backdrop-filter: blur(24px) saturate(1.5);
+  box-shadow: 0 10px 34px rgba(60, 40, 20, 0.12);
+}
+.widget .head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.widget h2 {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.widget .tag {
+  color: var(--mute);
+  font-size: 13.5px;
+}
+.widget .bio {
+  margin-top: 14px;
+  font-size: 14.5px;
+}
+.widget .bio p + p {
+  margin-top: 4px;
+}
+.avatar {
+  display: block;
+  flex: none;
+  width: 60px;
+  height: 60px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: linear-gradient(#c9c0b7, #a59a8f);
+}
+.avatar img,
+.avatar svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.avatar.big {
+  width: 96px;
+  height: 96px;
+}
+
+/* 연락 창 */
+.contacts {
+  padding: 4px 12px 0;
+}
+.contacts li {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 12px;
+  padding-block: 10px;
+}
+.contacts li + li {
+  border-top: 1px solid var(--line);
+}
+.contacts .l {
+  color: var(--mute);
+  font-size: 13px;
+}
+.contacts .v a {
+  color: var(--blue);
+}
+.contacts .v a:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.copy {
+  padding: 1px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--seg);
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.copy:hover {
+  color: var(--blue);
+}
+
+/* ── 잠금화면: 첫 화면에 처음 들어올 때만 ── */
+.lock {
+  display: none;
+}
+html.locked .lock {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: clamp(48px, 11vh, 110px) 20px clamp(56px, 12vh, 120px);
+  background: color-mix(in srgb, var(--wall-1) 45%, transparent);
+  -webkit-backdrop-filter: blur(34px) saturate(1.4);
+  backdrop-filter: blur(34px) saturate(1.4);
+  cursor: pointer;
+  text-align: center;
+}
+html.locked {
+  overflow: hidden;
+}
+.lock-clock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.lock-clock span {
+  font-size: clamp(17px, 2.4vw, 22px);
+  font-weight: 600;
+}
+.lock-clock strong {
+  font-size: clamp(76px, 14vw, 128px);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.lock-user {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.lock-user b {
+  margin-top: 4px;
+  font-size: 18px;
+  font-weight: 600;
+}
+.lock-hint {
+  color: var(--mute);
+  font-size: 13px;
 }
 
 /* 창 안: 목록 */
@@ -611,7 +759,7 @@ button {
 }
 
 /* ── 폰: 창을 끌지 않고 아래로 쌓는다. 독은 그대로 아래에 떠 있다 ── */
-@media (max-width: 760px) {
+@media (max-width: 1000px) {
   .menubar {
     gap: 4px 14px;
     padding-inline: 14px;
@@ -620,12 +768,16 @@ button {
     display: none;
   }
   .win,
-  .win.sheet {
+  .win.sheet,
+  .widget {
     position: static;
     width: auto;
-    max-width: none;
+    max-width: 640px;
     max-height: none;
-    margin: 14px 12px 0;
+    margin: 14px auto 0;
+  }
+  main {
+    padding-inline: 12px;
   }
   .win-in {
     overflow: visible;
@@ -661,6 +813,15 @@ button {
   }
   .win.closing {
     animation: close 0.16s ease-in forwards;
+  }
+  html.unlocking .lock {
+    animation: unlock 0.32s ease-in forwards;
+  }
+  @keyframes unlock {
+    to {
+      opacity: 0;
+      transform: translateY(-6%);
+    }
   }
   @keyframes open {
     from {

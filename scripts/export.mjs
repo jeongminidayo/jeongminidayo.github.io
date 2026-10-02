@@ -171,20 +171,29 @@ lectures.sort((a, b) => (a.date < b.date ? 1 : -1));
 fs.writeFileSync(path.join(OUT, 'lectures.json'), JSON.stringify(lectures, null, 2) + '\n');
 report.lectures = lectures.length;
 
-// 4) 소개
-const about = { name: '이정민', mail: '', links: [], body: '' };
-const aboutFile = path.join(SRC, '소개.md');
-if (fs.existsSync(aboutFile)) {
+// 4) 프로필 — 바탕화면 프로필 카드와 연락 창에 쓰인다. (예전 이름 소개.md도 읽는다)
+const about = { name: '이정민', tagline: '', photo: '', body: '', contacts: [] };
+const aboutFile = ['프로필.md', '소개.md'].map((f) => path.join(SRC, f)).find((f) => fs.existsSync(f));
+if (aboutFile) {
   const n = parseNote(fs.readFileSync(aboutFile, 'utf8'));
   if (isPublic(n.data)) {
     about.name = n.data['이름'] || about.name;
-    about.mail = n.data['문의'] || '';
-    for (const [label, key] of [['인스타그램', '인스타그램'], ['유튜브', '유튜브'], ['블로그', '블로그']]) {
-      if (n.data[key]) about.links.push({ label, url: n.data[key] });
+    about.tagline = n.data['한줄'] || '';
+    about.photo = (n.data['사진'] && useAttachment(n.data['사진'])) || '';
+    // 연락 창에 뜨는 줄. 정보칸에 적힌 것만, 이 순서로 나온다.
+    const mail = n.data['메일'] || n.data['문의'];
+    if (mail) about.contacts.push({ label: '메일', value: mail, href: `mailto:${mail}`, copy: true });
+    if (n.data['전화']) {
+      about.contacts.push({ label: '전화', value: n.data['전화'], href: `tel:${n.data['전화'].replace(/[^0-9+]/g, '')}`, copy: true });
     }
+    for (const key of ['카카오톡', '인스타그램', '유튜브', '블로그']) {
+      const url = n.data[key];
+      if (url) about.contacts.push({ label: key, value: url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''), href: url, copy: false });
+    }
+    if (n.data['주소']) about.contacts.push({ label: '주소', value: n.data['주소'], href: '', copy: false });
     about.body = convertBody(n.body.replace(/^#\s.*$/m, ''), publicPosts).trim();
   } else {
-    report.skipped.push('소개.md');
+    report.skipped.push(path.basename(aboutFile));
   }
 }
 fs.writeFileSync(path.join(OUT, 'about.json'), JSON.stringify(about, null, 2) + '\n');

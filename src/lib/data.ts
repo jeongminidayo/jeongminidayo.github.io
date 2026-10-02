@@ -21,7 +21,8 @@ export async function getPosts() {
 }
 
 
-export type About = { name: string; mail: string; links: { label: string; url: string }[]; body: string };
+export type Contact = { label: string; value: string; href: string; copy: boolean };
+export type About = { name: string; tagline: string; photo: string; body: string; contacts: Contact[] };
 export const getAbout = (): About => read('about.json');
 
 type LectureRow = { date: string; org: string; topic: string; role: string };
