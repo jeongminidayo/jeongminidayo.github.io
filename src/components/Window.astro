@@ -1,5 +1,6 @@
 ---
-// 창 하나. 제목줄을 잡고 끌 수 있고(Desktop.astro의 스크립트), sheet는 글 한 편용 고정 창이다.
+// 창 하나. 빨강은 닫기, 노랑은 독으로 접기, 초록은 화면 가득 키우기(Desktop.astro의 스크립트가 움직인다).
+// sheet는 글 한 편용 고정 창이다 — 빨강을 누르면 바탕화면으로 돌아간다.
 interface Props {
   id: string;
   title: string;
@@ -12,7 +13,7 @@ interface Props {
   sheet?: boolean;
   closeHref?: string;
 }
-const { id, title, open = false, x = 150, y = 76, w = 440, h, sheet = false, closeHref } = Astro.props;
+const { id, title, open = false, x = 0, y = 58, w = 440, h, sheet = false, closeHref } = Astro.props;
 ---
 
 <section
@@ -23,15 +24,18 @@ const { id, title, open = false, x = 150, y = 76, w = 440, h, sheet = false, clo
   aria-label={title}
 >
   <div class="win-bar">
-    {
-      closeHref ? (
-        <a class="win-x" href={closeHref} aria-label="닫고 바탕화면으로" />
-      ) : (
-        <button type="button" class="win-x" aria-label={`${title} 창 닫기`} />
-      )
-    }
-    <span>{title}</span>
-    <span></span>
+    <span class="lights">
+      {
+        closeHref ? (
+          <a class="light red" href={closeHref} aria-label="닫고 바탕화면으로" />
+        ) : (
+          <button type="button" class="light red" data-act="close" aria-label={`${title} 창 닫기`} />
+        )
+      }
+      <button type="button" class="light yellow" data-act="min" aria-label={`${title} 창 접기`} disabled={sheet}></button>
+      <button type="button" class="light green" data-act="max" aria-label={`${title} 창 크게`}></button>
+    </span>
+    <span class="win-title">{title}</span>
   </div>
   <div class="win-in"><slot /></div>
 </section>

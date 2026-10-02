@@ -1,7 +1,7 @@
 ---
 import '@fontsource/ibm-plex-sans-kr/400.css';
-import '@fontsource/ibm-plex-sans-kr/500.css';
 import '@fontsource/ibm-plex-sans-kr/600.css';
+import '@fontsource/ibm-plex-sans-kr/700.css';
 import '../styles/global.css';
 import Window from '../components/Window.astro';
 import { getPosts, getListed, getAbout, getLectures, lectureDate, fmt } from '../lib/data';
@@ -26,11 +26,12 @@ const kinds = [...new Set(posts.map((p) => p.data.kind).filter(Boolean))];
 const noPosts = posts.length === 0;
 const opened = open === 'home' ? [posts.length ? 'posts' : 'lectures', 'about'] : open;
 const isOpen = (id: string) => opened.includes(id);
-// 창 하나만 열린 페이지에서는 그 창을 가운데 자리에 크게 둔다.
+// 창 하나만 열린 페이지에서는 그 창을 가운데에 크게 둔다.
 const solo = opened.length === 1 ? opened[0] : null;
-// 여러 창이 같이 열릴 땐 2×2로 나눠 놓는다. h는 창 높이 한도(넘치면 창 안에서 스크롤) — 위 칸 창이 길어져도 아래 칸 창의 제목줄을 덮지 않게 한다.
+// 여러 창이 같이 열릴 땐 2×2로 나눠 놓는다(왼쪽 칸 x=0, 오른쪽 칸 x=520 / 위 y=58, 아래 y=454).
+// h는 창 높이 한도 — 위 칸 창이 길어져도 아래 칸 창의 제목줄을 덮지 않게 한다. 넘치면 창 안에서 스크롤.
 const place = (id: string, x: number, y: number, w: number, h?: number) =>
-  solo === id ? { x: 150, y: 76, w: 540 } : { x, y, w, h };
+  solo === id ? { x: 190, y: 58, w: 540 } : { x, y, w, h };
 
 const paragraphs = about.body.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
 const pageTitle = title ? `${title} | ${about.name}` : about.name;
@@ -43,7 +44,7 @@ const ogImage = new URL('/og.png', Astro.site);
 <html lang="ko">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{pageTitle}</title>
     <meta name="description" content={pageDesc} />
     <link rel="canonical" href={canonical} />
@@ -74,43 +75,26 @@ const ogImage = new URL('/og.png', Astro.site);
         {works.length > 0 && <a href="/works/" data-open="works">만든 것</a>}
         <a href="/about/" data-open="about">소개</a>
         <span class="right">
-          <a href="/search/">검색</a>
-          <button type="button" class="theme" id="theme" aria-label="밝은 화면과 어두운 화면 바꾸기">
+          <a class="tool" href="/search/" aria-label="검색">
             <svg viewBox="0 0 16 16" aria-hidden="true">
-              <circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.3"></circle>
-              <path d="M8 1.5 A6.5 6.5 0 0 1 8 14.5 Z" fill="currentColor"></path>
+              <circle cx="7" cy="7" r="4.6" fill="none" stroke="currentColor" stroke-width="1.6"></circle>
+              <path d="M10.6 10.6 L14.2 14.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path>
+            </svg>
+          </a>
+          <button type="button" class="tool" id="theme" aria-label="밝은 화면과 어두운 화면 바꾸기">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.5"></circle>
+              <path d="M8 1.8 A6.2 6.2 0 0 1 8 14.2 Z" fill="currentColor"></path>
             </svg>
           </button>
           <span class="date" id="today"></span>
         </span>
       </header>
 
-      <nav class="icons" aria-label="폴더">
-        <a class="icon" href="/posts/" data-open="posts">
-          <svg viewBox="0 0 44 36" aria-hidden="true"><path d="M2 8 V32 H42 V10 H20 L16 4 H2 Z"></path></svg>글
-        </a>
-        <a class="icon" href="/lectures/" data-open="lectures">
-          <svg viewBox="0 0 44 36" aria-hidden="true"><path d="M2 8 V32 H42 V10 H20 L16 4 H2 Z"></path></svg>강의
-        </a>
-        <a class="icon" href="/files/" data-open="files">
-          <svg viewBox="0 0 44 36" aria-hidden="true"><path d="M2 8 V32 H42 V10 H20 L16 4 H2 Z"></path></svg>자료실
-        </a>
-        {
-          works.length > 0 && (
-            <a class="icon" href="/works/" data-open="works">
-              <svg viewBox="0 0 44 36" aria-hidden="true"><path d="M2 8 V32 H42 V10 H20 L16 4 H2 Z" /></svg>만든 것
-            </a>
-          )
-        }
-        <a class="icon" href="/about/" data-open="about">
-          <svg viewBox="0 0 44 36" aria-hidden="true"><path d="M11 2 H27 L33 8 V34 H11 Z M27 2 V8 H33"></path></svg>소개
-        </a>
-      </nav>
-
       <main>
         <slot />
 
-        <Window id="posts" title="글" open={isOpen('posts')} {...place('posts', 150, 76, 480, 372)}>
+        <Window id="posts" title="글" open={isOpen('posts')} {...place('posts', 0, 58, 490, 372)}>
           {
             kinds.length > 1 && (
               <div class="chips" role="group" aria-label="분류로 거르기">
@@ -140,7 +124,7 @@ const ogImage = new URL('/og.png', Astro.site);
           </div>
         </Window>
 
-        <Window id="about" title="소개" open={isOpen('about')} {...place('about', 660, noPosts ? 76 : 470, 400)}>
+        <Window id="about" title="소개" open={isOpen('about')} {...place('about', 520, noPosts ? 58 : 454, 400)}>
           <div class="about">
             {paragraphs.map((p) => <p>{p}</p>)}
             {
@@ -148,7 +132,7 @@ const ogImage = new URL('/og.png', Astro.site);
                 <div class="contact">
                   {about.mail && (
                     <p>
-                      문의 <a href={`mailto:${about.mail}`}>{about.mail}</a>
+                      <a href={`mailto:${about.mail}`}>문의 {about.mail}</a>
                     </p>
                   )}
                   {about.links.map((l) => (
@@ -162,14 +146,19 @@ const ogImage = new URL('/og.png', Astro.site);
           </div>
         </Window>
 
-        <Window id="lectures" title="강의" open={isOpen('lectures')} {...place('lectures', noPosts ? 150 : 660, 76, noPosts ? 480 : 400, 372)}>
+        <Window
+          id="lectures"
+          title="강의"
+          open={isOpen('lectures')}
+          {...place('lectures', noPosts ? 0 : 520, 58, noPosts ? 490 : 400, 372)}
+        >
           <ul class="rows">
             {
               lectures.rows.map((l) => (
                 <li data-until={l.to}>
                   <span class="t">
                     {l.org}
-                    <span class="k" data-upcoming hidden>예정</span>
+                    <span class="k soon" data-upcoming hidden>예정</span>
                     <span class="desc">{[l.topic, l.role].filter(Boolean).join(', ')}</span>
                   </span>
                   <span class="d">{lectureDate(l)}</span>
@@ -179,7 +168,7 @@ const ogImage = new URL('/og.png', Astro.site);
           </ul>
         </Window>
 
-        <Window id="files" title="자료실" open={isOpen('files')} {...place('files', 150, 470, 480, 300)}>
+        <Window id="files" title="자료실" open={isOpen('files')} {...place('files', 0, 454, 490, 300)}>
           <ul class="rows">
             {
               files.map((f) => (
@@ -197,7 +186,7 @@ const ogImage = new URL('/og.png', Astro.site);
 
         {
           works.length > 0 && (
-            <Window id="works" title="만든 것" open={isOpen('works')} {...place('works', 400, 240, 420, 340)}>
+            <Window id="works" title="만든 것" open={isOpen('works')} {...place('works', 250, 200, 420, 340)}>
               <ul class="rows">
                 {works.map((f) => (
                   <li>
@@ -213,11 +202,52 @@ const ogImage = new URL('/og.png', Astro.site);
           )
         }
       </main>
+
+      <nav class="dock" aria-label="독">
+        <a href="/posts/" data-open="posts">
+          <svg viewBox="0 0 52 52" aria-hidden="true">
+            <rect x="2" y="2" width="48" height="48" rx="12" fill="#fff"></rect>
+            <path d="M2 14 a12 12 0 0 1 12 -12 h24 a12 12 0 0 1 12 12 v2 H2 Z" fill="#fec92f"></path>
+            <path d="M12 25 H40 M12 32 H40 M12 39 H30" stroke="#c9c9ce" stroke-width="2.2" stroke-linecap="round"></path>
+          </svg>글
+        </a>
+        <a href="/lectures/" data-open="lectures">
+          <svg viewBox="0 0 52 52" aria-hidden="true">
+            <rect x="2" y="2" width="48" height="48" rx="12" fill="#fff"></rect>
+            <path d="M2 14 a12 12 0 0 1 12 -12 h24 a12 12 0 0 1 12 12 v4 H2 Z" fill="#ff4b3e"></path>
+            <text id="dock-day" x="26" y="41" text-anchor="middle" font-size="21" font-weight="600" fill="#1d1d1f" font-family="-apple-system, Helvetica, Arial, sans-serif"></text>
+          </svg>강의
+        </a>
+        <a href="/files/" data-open="files">
+          <svg viewBox="0 0 52 52" aria-hidden="true">
+            <path d="M6 14 a5 5 0 0 1 5 -5 h10 l5 5 h15 a5 5 0 0 1 5 5 v3 H6 Z" fill="#3b9cf0"></path>
+            <rect x="6" y="18" width="40" height="26" rx="5" fill="#64b9ff"></rect>
+          </svg>자료실
+        </a>
+        {
+          works.length > 0 && (
+            <a href="/works/" data-open="works">
+              <svg viewBox="0 0 52 52" aria-hidden="true">
+                <rect x="2" y="2" width="48" height="48" rx="12" fill="#34c38f" />
+                <path d="M15 27 l8 8 l15 -17" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>만든 것
+            </a>
+          )
+        }
+        <a href="/about/" data-open="about">
+          <svg viewBox="0 0 52 52" aria-hidden="true">
+            <rect x="2" y="2" width="48" height="48" rx="12" fill="#b7ada3"></rect>
+            <circle cx="26" cy="21" r="8" fill="#fff"></circle>
+            <path d="M10 46 a16 14 0 0 1 32 0 Z" fill="#fff"></path>
+          </svg>소개
+        </a>
+      </nav>
     </div>
 
     <script>
       const desk = document.querySelector<HTMLElement>('.desk')!;
       const narrow = window.matchMedia('(max-width: 760px)');
+      const calm = window.matchMedia('(prefers-reduced-motion: reduce)');
       const floating = () => [...document.querySelectorAll<HTMLElement>('.win:not(.sheet)')];
       let top = 10;
 
@@ -225,9 +255,17 @@ const ogImage = new URL('/og.png', Astro.site);
         w.style.zIndex = String(++top);
       };
 
+      // 독: 열려 있는 창의 아이콘 아래에 점을 찍는다.
+      const syncDock = () => {
+        document.querySelectorAll<HTMLElement>('.dock [data-open]').forEach((a) => {
+          const w = document.querySelector<HTMLElement>(`.win[data-win="${a.dataset.open}"]`);
+          a.classList.toggle('running', !!w && !w.hidden);
+        });
+      };
+
       // 화면이 좁으면 창이 오른쪽으로 잘리지 않게 안으로 당긴다.
       const fit = (w: HTMLElement) => {
-        if (narrow.matches || w.hidden) return;
+        if (narrow.matches || w.hidden || w.classList.contains('max')) return;
         const maxLeft = Math.max(12, desk.clientWidth - w.offsetWidth - 12);
         if (w.offsetLeft > maxLeft) w.style.left = `${maxLeft}px`;
       };
@@ -237,6 +275,7 @@ const ogImage = new URL('/og.png', Astro.site);
         if (!w) return false;
         const wasHidden = w.hidden;
         w.hidden = false;
+        w.classList.remove('closing');
         raise(w);
         fit(w);
         if (wasHidden) {
@@ -244,44 +283,110 @@ const ogImage = new URL('/og.png', Astro.site);
           w.addEventListener('animationend', () => w.classList.remove('opening'), { once: true });
         }
         if (narrow.matches) w.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        syncDock();
         return true;
       };
 
-      // 메뉴·폴더: 그 창이 이 화면에 있으면 페이지를 옮기지 않고 창을 연다.
+      const hideWin = (w: HTMLElement, toDock: boolean) => {
+        const done = () => {
+          w.hidden = true;
+          w.classList.remove('closing', 'max');
+          syncDock();
+        };
+        // 노랑(접기)은 독 쪽으로 빨려 들어가듯 사라진다. 빨강(닫기)은 바로 사라진다.
+        if (toDock && !calm.matches && !narrow.matches) {
+          w.classList.add('closing');
+          w.addEventListener('animationend', done, { once: true });
+        } else {
+          done();
+        }
+      };
+
+      const toggleMax = (w: HTMLElement) => {
+        if (narrow.matches) return;
+        w.classList.toggle('max');
+        raise(w);
+      };
+
       document.addEventListener('click', (e) => {
-        const link = (e.target as HTMLElement).closest<HTMLElement>('[data-open]');
+        const target = e.target as HTMLElement;
+        // 신호등 버튼
+        const act = target.closest<HTMLElement>('[data-act]');
+        if (act) {
+          const w = act.closest<HTMLElement>('.win')!;
+          if (act.dataset.act === 'close') hideWin(w, false);
+          if (act.dataset.act === 'min') hideWin(w, true);
+          if (act.dataset.act === 'max') toggleMax(w);
+          return;
+        }
+        // 메뉴·독: 그 창이 이 화면에 있으면 페이지를 옮기지 않고 창을 연다.
+        const link = target.closest<HTMLElement>('[data-open]');
         if (link && openWin(link.dataset.open!)) e.preventDefault();
+      });
+
+      // 제목줄을 두 번 누르면 초록 버튼과 같다.
+      document.addEventListener('dblclick', (e) => {
+        const bar = (e.target as HTMLElement).closest<HTMLElement>('.win-bar');
+        if (bar && !(e.target as HTMLElement).closest('.lights')) toggleMax(bar.closest<HTMLElement>('.win')!);
       });
 
       for (const w of floating()) {
         if (!w.hidden) raise(w);
         fit(w);
         w.addEventListener('pointerdown', () => raise(w));
-        w.querySelector('button.win-x')?.addEventListener('click', () => {
-          w.hidden = true;
-        });
 
+        // 제목줄 잡고 옮기기
         const bar = w.querySelector<HTMLElement>('.win-bar')!;
         let drag: { x: number; y: number; left: number; top: number } | null = null;
         bar.addEventListener('pointerdown', (e) => {
-          if (narrow.matches || (e.target as HTMLElement).closest('.win-x')) return;
+          if (narrow.matches || w.classList.contains('max') || (e.target as HTMLElement).closest('.lights')) return;
           drag = { x: e.clientX, y: e.clientY, left: w.offsetLeft, top: w.offsetTop };
           bar.setPointerCapture(e.pointerId);
         });
         bar.addEventListener('pointermove', (e) => {
           if (!drag) return;
           const left = Math.max(0, Math.min(drag.left + e.clientX - drag.x, desk.clientWidth - 80));
-          const y = Math.max(44, Math.min(drag.top + e.clientY - drag.y, desk.clientHeight - 40));
+          const y = Math.max(34, Math.min(drag.top + e.clientY - drag.y, desk.clientHeight - 60));
           w.style.left = `${left}px`;
           w.style.top = `${y}px`;
         });
-        const stop = () => {
+        const stopDrag = () => {
           drag = null;
         };
-        bar.addEventListener('pointerup', stop);
-        bar.addEventListener('pointercancel', stop);
+        bar.addEventListener('pointerup', stopDrag);
+        bar.addEventListener('pointercancel', stopDrag);
+
+        // 오른쪽 변, 아래 변, 오른쪽 아래 모서리를 잡고 크기 조절
+        for (const edge of ['r', 'b', 'br'] as const) {
+          const grip = document.createElement('i');
+          grip.className = `rz rz-${edge}`;
+          w.appendChild(grip);
+          let size: { x: number; y: number; w: number; h: number } | null = null;
+          grip.addEventListener('pointerdown', (e) => {
+            size = { x: e.clientX, y: e.clientY, w: w.offsetWidth, h: w.offsetHeight };
+            grip.setPointerCapture(e.pointerId);
+            e.preventDefault();
+          });
+          grip.addEventListener('pointermove', (e) => {
+            if (!size) return;
+            if (edge !== 'b') {
+              const max = desk.clientWidth - w.offsetLeft - 8;
+              w.style.width = `${Math.max(300, Math.min(size.w + e.clientX - size.x, max))}px`;
+            }
+            if (edge !== 'r') {
+              w.style.height = `${Math.max(170, size.h + e.clientY - size.y)}px`;
+              w.style.maxHeight = 'none';
+            }
+          });
+          const stopSize = () => {
+            size = null;
+          };
+          grip.addEventListener('pointerup', stopSize);
+          grip.addEventListener('pointercancel', stopSize);
+        }
       }
       window.addEventListener('resize', () => floating().forEach(fit));
+      syncDock();
 
       // 글 창의 분류 거르기
       const chips = document.querySelectorAll<HTMLButtonElement>('.chips button');
@@ -302,11 +407,13 @@ const ogImage = new URL('/og.png', Astro.site);
         if (li.dataset.until! > todayIso) li.querySelector<HTMLElement>('[data-upcoming]')!.hidden = false;
       });
 
-      // 메뉴 줄 오른쪽: 오늘 날짜, 화면 밝기
+      // 메뉴 줄 오른쪽 날짜, 독의 달력 숫자, 화면 밝기
       const today = document.getElementById('today');
       if (today) {
-        today.textContent = new Intl.DateTimeFormat('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' }).format(new Date());
+        today.textContent = new Intl.DateTimeFormat('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' }).format(now);
       }
+      const dockDay = document.getElementById('dock-day');
+      if (dockDay) dockDay.textContent = String(now.getDate());
       document.getElementById('theme')?.addEventListener('click', () => {
         const root = document.documentElement;
         const dark = root.dataset.theme
