@@ -166,9 +166,10 @@ const ogImage = new URL('/og.png', Astro.site);
           <ul class="rows">
             {
               lectures.rows.map((l) => (
-                <li>
+                <li data-until={l.to}>
                   <span class="t">
                     {l.org}
+                    <span class="k" data-upcoming hidden>예정</span>
                     <span class="desc">{[l.topic, l.role].filter(Boolean).join(', ')}</span>
                   </span>
                   <span class="d">{lectureDate(l)}</span>
@@ -293,6 +294,13 @@ const ogImage = new URL('/og.png', Astro.site);
           });
         }),
       );
+
+      // 강의 창: 아직 안 지난 날짜에 "예정"을 붙인다(사이트를 다시 만들지 않아도 날짜가 지나면 사라지게 여기서 본다).
+      const now = new Date();
+      const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      document.querySelectorAll<HTMLElement>('li[data-until]').forEach((li) => {
+        if (li.dataset.until! > todayIso) li.querySelector<HTMLElement>('[data-upcoming]')!.hidden = false;
+      });
 
       // 메뉴 줄 오른쪽: 오늘 날짜, 화면 밝기
       const today = document.getElementById('today');
