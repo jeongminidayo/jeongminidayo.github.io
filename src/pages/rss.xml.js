@@ -1,12 +1,12 @@
 import rss from '@astrojs/rss';
-import { getAbout, getPosts } from '../lib/data';
+import { getAbout, getPosts, siteDescription } from '../lib/data';
 
 export async function GET(context) {
   const about = getAbout();
   const posts = await getPosts();
   return rss({
     title: about.name,
-    description: about.body.replace(/\s+/g, ' ').trim(),
+    description: siteDescription(about),
     site: context.site,
     items: posts.map((post) => ({
       title: post.data.title,

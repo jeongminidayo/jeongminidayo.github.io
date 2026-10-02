@@ -32,6 +32,13 @@ export type About = {
 };
 export const getAbout = (): About => read('about.json');
 
+// 검색 결과·공유 미리보기·RSS에 쓰는 한 줄 설명. 프로필 글이 있으면 그 글, 없으면 이름 아래 한 줄과 표 줄로 만든다.
+export function siteDescription(about: About) {
+  const text = about.body.replace(/\s+/g, ' ').trim();
+  if (text) return text;
+  return [about.tagline, ...about.rows.map((r) => `${r.label} ${r.value}`)].filter(Boolean).join(' · ');
+}
+
 type LectureRow = { date: string; org: string; topic: string; role: string };
 export type Lecture = { from: string; to: string; org: string; topic: string; role: string; days: number };
 
