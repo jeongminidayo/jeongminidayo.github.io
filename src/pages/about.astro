@@ -1,6 +1,5 @@
 ---
-// 프로필은 바탕화면에 늘 떠 있다. 예전 주소(/about/)로 들어와도 같은 화면을 보여 준다.
 import Desktop from '../layouts/Desktop.astro';
 ---
 
-<Desktop title="프로필" open="home" />
+<Desktop title="프로필" open={['about']} />

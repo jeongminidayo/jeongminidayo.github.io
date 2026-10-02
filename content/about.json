@@ -2,13 +2,37 @@
   "name": "이정민",
   "tagline": "AI 강의 튜터",
   "photo": "",
-  "body": "페이퍼로지 AI 강의에 튜터로 다닙니다.\n\nAI 도구를 쓰면서 알게 된 것, 본 영화, 그때그때 든 생각을 적습니다.",
+  "rows": [
+    {
+      "label": "소속",
+      "value": "페이퍼로지"
+    }
+  ],
+  "body": "",
   "contacts": [
     {
-      "label": "메일",
+      "label": "이메일",
       "value": "minglemin01@gmail.com",
       "href": "mailto:minglemin01@gmail.com",
       "copy": true
+    },
+    {
+      "label": "유튜브",
+      "value": "",
+      "href": "",
+      "copy": false
+    },
+    {
+      "label": "인스타그램",
+      "value": "",
+      "href": "",
+      "copy": false
+    },
+    {
+      "label": "블로그",
+      "value": "",
+      "href": "",
+      "copy": false
     }
   ]
 }
