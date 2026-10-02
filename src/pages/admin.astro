@@ -1,0 +1,808 @@
+---
+// 관리자 화면. 정민이 직접 글·강의·프로필·연락처·자료를 고치는 곳.
+// 여기서 저장하면 세컨브레인 저장소의 6_발행 폴더에 바로 적히고(깃허브 API), 그쪽 자동 작업이 사이트로 내보낸다.
+// 이 페이지 자체에는 비밀이 없다 — 깃허브 열쇠(토큰)를 넣은 사람만 읽고 쓸 수 있다.
+import '@fontsource/ibm-plex-sans-kr/400.css';
+import '@fontsource/ibm-plex-sans-kr/600.css';
+import '@fontsource/ibm-plex-sans-kr/700.css';
+import '../styles/global.css';
+---
+
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>관리 | 이정민</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script is:inline>
+      try {
+        var t = localStorage.getItem('theme');
+        if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    </script>
+  </head>
+  <body data-pagefind-ignore>
+    <header class="menubar">
+      <a class="who" href="/">이정민</a>
+      <span>관리</span>
+      <span class="right">
+        <button type="button" class="adm-link" id="logout" hidden>로그아웃</button>
+      </span>
+    </header>
+
+    <main class="adm">
+      <!-- 로그인 -->
+      <section class="win adm-win adm-login" id="login" hidden>
+        <div class="win-bar"><span class="lights"><i class="light red"></i><i class="light yellow"></i><i class="light green"></i></span><span>로그인</span></div>
+        <form class="adm-pane" id="login-form">
+          <label for="token">깃허브 열쇠</label>
+          <input id="token" type="password" autocomplete="off" spellcheck="false" />
+          <label class="adm-check"><input id="remember" type="checkbox" checked /> 이 기기에 기억하기</label>
+          <p class="adm-msg" id="login-msg" role="status"></p>
+          <div class="adm-actions"><button type="submit" class="adm-btn primary">로그인</button></div>
+          <details>
+            <summary>열쇠 만드는 법</summary>
+            <ol>
+              <li><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">깃허브 열쇠 만들기 화면</a>을 연다.</li>
+              <li>Token name에 「홈페이지 관리」, Expiration은 원하는 기간.</li>
+              <li>Repository access에서 Only select repositories → SecondBrain 하나만 고른다.</li>
+              <li>Permissions → Repository permissions → Contents를 Read and write로 바꾼다.</li>
+              <li>Generate token을 누르고 나온 글자를 복사해 위 칸에 붙여 넣는다.</li>
+            </ol>
+          </details>
+        </form>
+      </section>
+
+      <!-- 관리 -->
+      <section class="win adm-win" id="app" hidden>
+        <div class="win-bar"><span class="lights"><i class="light red"></i><i class="light yellow"></i><i class="light green"></i></span><span id="app-title">관리</span></div>
+        <div class="adm-body">
+          <nav class="adm-side" aria-label="고칠 곳">
+            <button type="button" data-view="posts">글</button>
+            <button type="button" data-view="lectures">강의</button>
+            <button type="button" data-view="profile">프로필</button>
+            <button type="button" data-view="contacts">연락처</button>
+            <button type="button" data-view="files">자료실</button>
+            <button type="button" data-view="works">만든 것</button>
+          </nav>
+          <div class="adm-pane" id="pane"></div>
+        </div>
+        <p class="adm-status" id="status" role="status"></p>
+      </section>
+    </main>
+
+    <script>
+      // @ts-nocheck
+      import { parse, getFm, setFm, serialize, splitLectureTable, joinLectureTable } from '../lib/note.js';
+
+      const REPO = 'jeongminidayo/SecondBrain';
+      const ROOT = '6_발행';
+      const BRANCH = 'main';
+      const DIRS = { posts: '글', files: '자료', works: '만든것' };
+      const NAMES = { posts: '글', lectures: '강의', profile: '프로필', contacts: '연락처', files: '자료실', works: '만든 것' };
+
+      const $ = (s, el = document) => el.querySelector(s);
+      const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+      const today = () => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      };
+
+      let token = '';
+      try {
+        token = localStorage.getItem('admin-token') || sessionStorage.getItem('admin-token') || '';
+      } catch {}
+
+      // ── 깃허브에 읽고 쓰기 ──
+      const encPath = (p) => p.split('/').map(encodeURIComponent).join('/');
+      async function gh(path, init = {}) {
+        const url = `https://api.github.com/repos/${REPO}/contents/${encPath(path)}` + (init.method ? '' : `?ref=${BRANCH}`);
+        const res = await fetch(url, {
+          cache: 'no-store',
+          ...init,
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/vnd.github+json',
+            'X-GitHub-Api-Version': '2022-11-28',
+            ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+          },
+        });
+        if (!res.ok) {
+          const err = new Error(`깃허브 응답 ${res.status}`);
+          err.status = res.status;
+          throw err;
+        }
+        return res.status === 204 ? null : res.json();
+      }
+      const toB64 = (text) => {
+        const bytes = new TextEncoder().encode(text);
+        let bin = '';
+        for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+        return btoa(bin);
+      };
+      const fromB64 = (b64) => {
+        const bin = atob(b64.replace(/\s/g, ''));
+        return new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0)));
+      };
+      const readNote = async (path) => {
+        const f = await gh(path);
+        return { path, sha: f.sha, text: fromB64(f.content) };
+      };
+      const writeNote = (path, text, sha, message) =>
+        gh(path, { method: 'PUT', body: JSON.stringify({ message, content: toB64(text), branch: BRANCH, ...(sha ? { sha } : {}) }) });
+      const removeNote = (path, sha, message) => gh(path, { method: 'DELETE', body: JSON.stringify({ message, sha, branch: BRANCH }) });
+      const listDir = async (dir) => {
+        try {
+          const items = await gh(`${ROOT}/${dir}`);
+          return items.filter((f) => f.type === 'file' && f.name.endsWith('.md') && !f.name.startsWith('_'));
+        } catch (e) {
+          if (e.status === 404) return [];
+          throw e;
+        }
+      };
+      async function uploadFile(file) {
+        const clean = file.name.replace(/[\\/?#%*:|"<>\s]+/g, '-');
+        const name = `${today()}-${Date.now().toString(36)}-${clean}`;
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        let bin = '';
+        for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+        await gh(`${ROOT}/첨부/${name}`, { method: 'PUT', body: JSON.stringify({ message: `관리자 화면: 첨부 ${name}`, content: btoa(bin), branch: BRANCH }) });
+        return name;
+      }
+
+      // ── 화면 ──
+      const pane = $('#pane');
+      const status = $('#status');
+      const say = (msg, bad) => {
+        status.textContent = msg;
+        status.classList.toggle('bad', !!bad);
+      };
+      const saved = () => say('저장했어. 1분쯤 뒤에 사이트에 반영돼.');
+      const fail = (e) => {
+        if (e.status === 401) return logout('열쇠가 만료됐거나 틀렸어. 다시 로그인해 줘.');
+        if (e.status === 409 || e.status === 422) return say('다른 곳에서 먼저 고쳐졌어. 이 화면을 새로 열어서 다시 고쳐 줘.', true);
+        say(`저장하지 못했어 (${e.message}).`, true);
+      };
+      const busy = (btn, on) => {
+        if (btn) btn.disabled = on;
+      };
+      const field = (id, label, value, attrs = '') =>
+        `<label for="${id}">${label}</label><input id="${id}" value="${esc(value)}" ${attrs} />`;
+
+      let view = 'posts';
+      function show(next) {
+        view = next;
+        document.querySelectorAll('.adm-side button').forEach((b) => b.setAttribute('aria-current', String(b.dataset.view === view)));
+        $('#app-title').textContent = `관리 — ${NAMES[view]}`;
+        say('');
+        pane.innerHTML = '<p class="adm-msg">불러오는 중</p>';
+        const run = { posts: () => listView('posts'), files: () => listView('files'), works: () => listView('works'), lectures: lecturesView, profile: profileView, contacts: contactsView }[view];
+        run().catch(fail);
+      }
+
+      // 글 · 자료실 · 만든 것: 목록
+      async function listView(kind) {
+        const items = await listDir(DIRS[kind]);
+        const notes = await Promise.all(items.map((f) => readNote(f.path).then((n) => ({ ...n, name: f.name, note: parse(n.text) }))));
+        notes.sort((a, b) => (getFm(b.note, '날짜') > getFm(a.note, '날짜') ? 1 : -1));
+        pane.innerHTML =
+          `<div class="adm-head"><h2>${NAMES[kind]}</h2><button type="button" class="adm-btn primary" id="new">${kind === 'posts' ? '새 글' : '새로 추가'}</button></div>` +
+          '<ul class="rows adm-list">' +
+          notes
+            .map(
+              (n, i) =>
+                `<li><button type="button" class="adm-row" data-i="${i}"><span class="t">${esc(getFm(n.note, '제목') || n.name.replace(/\.md$/, ''))}` +
+                `<span class="k ${getFm(n.note, '공개') === 'true' ? '' : 'draft'}">${getFm(n.note, '공개') === 'true' ? '공개' : '초안'}</span></span>` +
+                `<span class="d">${esc(getFm(n.note, '날짜').replaceAll('-', '.'))}</span></button></li>`,
+            )
+            .join('') +
+          '</ul>';
+        $('#new').addEventListener('click', () => (kind === 'posts' ? postEditor(null) : itemEditor(kind, null)));
+        pane.querySelectorAll('.adm-row').forEach((b) =>
+          b.addEventListener('click', () => (kind === 'posts' ? postEditor(notes[b.dataset.i]) : itemEditor(kind, notes[b.dataset.i]))),
+        );
+      }
+
+      const fileName = (title, slug) => (slug || title).trim().replace(/[\\/?#%*:|"<>]+/g, '').replace(/\s+/g, '-').slice(0, 80) + '.md';
+      function baseNote(extra) {
+        return { fm: [['날짜', today()], ['소스', '정민 (관리자 화면)'], ['유형', '발행'], ['노션', '없음'], ...extra], body: '' };
+      }
+
+      // 글 한 편 고치기
+      function postEditor(existing) {
+        const note = existing ? existing.note : baseNote([]);
+        pane.innerHTML =
+          `<div class="adm-head"><button type="button" class="adm-link" id="back">글 목록으로</button></div>` +
+          '<form class="adm-form" id="form">' +
+          field('f-title', '제목', getFm(note, '제목'), 'required') +
+          '<div class="adm-two">' +
+          `<div>${field('f-date', '날짜', getFm(note, '날짜') || today(), 'type="date" required')}</div>` +
+          `<div>${field('f-kind', '분류', getFm(note, '분류'), 'placeholder="AI, 영화, 생각"')}</div>` +
+          '</div>' +
+          field('f-summary', '요약', getFm(note, '요약')) +
+          field('f-slug', '주소 (영어로 짧게, 비워도 됨)', getFm(note, '주소'), 'placeholder="windows-drop"') +
+          `<label for="f-body">본문</label><textarea id="f-body" rows="18">${esc(note.body.trim())}</textarea>` +
+          '<div class="adm-inline"><label class="adm-btn" for="f-image">그림 넣기</label><input id="f-image" type="file" accept="image/*" hidden /></div>' +
+          `<label class="adm-check"><input id="f-public" type="checkbox" ${getFm(note, '공개') === 'true' ? 'checked' : ''} /> 공개 (끄면 초안으로만 남아)</label>` +
+          '<div class="adm-actions">' +
+          (existing ? '<button type="button" class="adm-btn danger" id="del">삭제</button>' : '') +
+          '<button type="submit" class="adm-btn primary" id="save">저장</button></div></form>';
+        $('#back').addEventListener('click', () => show('posts'));
+        $('#f-image').addEventListener('change', async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          say('그림 올리는 중');
+          try {
+            const name = await uploadFile(file);
+            const ta = $('#f-body');
+            ta.setRangeText(`\n![[${name}]]\n`, ta.selectionStart, ta.selectionEnd, 'end');
+            say('그림을 넣었어. 저장을 눌러야 글에 반영돼.');
+          } catch (err) {
+            fail(err);
+          }
+        });
+        if (existing) {
+          let armed = false;
+          $('#del').addEventListener('click', async (e) => {
+            if (!armed) {
+              armed = true;
+              e.target.textContent = '한 번 더 누르면 삭제';
+              return;
+            }
+            busy(e.target, true);
+            try {
+              await removeNote(existing.path, existing.sha, `관리자 화면: 글 삭제 — ${getFm(note, '제목')}`);
+              show('posts');
+              say('삭제했어. 1분쯤 뒤에 사이트에서도 내려가.');
+            } catch (err) {
+              busy(e.target, false);
+              fail(err);
+            }
+          });
+        }
+        $('#form').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const title = $('#f-title').value.trim();
+          setFm(note, '제목', title);
+          setFm(note, '날짜', $('#f-date').value);
+          setFm(note, '분류', $('#f-kind').value.trim());
+          setFm(note, '요약', $('#f-summary').value.trim());
+          setFm(note, '주소', $('#f-slug').value.trim());
+          setFm(note, '공개', $('#f-public').checked ? 'true' : 'false');
+          note.body = $('#f-body').value;
+          const path = existing ? existing.path : `${ROOT}/${DIRS.posts}/${fileName(title, $('#f-slug').value)}`;
+          busy($('#save'), true);
+          try {
+            await writeNote(path, serialize(note), existing?.sha, `관리자 화면: 글 ${existing ? '수정' : '추가'} — ${title}`);
+            show('posts');
+            saved();
+          } catch (err) {
+            busy($('#save'), false);
+            fail(err);
+          }
+        });
+      }
+
+      // 자료실 · 만든 것 한 줄 고치기
+      function itemEditor(kind, existing) {
+        const note = existing ? existing.note : baseNote([]);
+        pane.innerHTML =
+          `<div class="adm-head"><button type="button" class="adm-link" id="back">${NAMES[kind]} 목록으로</button></div>` +
+          '<form class="adm-form" id="form">' +
+          field('f-title', '제목', getFm(note, '제목'), 'required') +
+          field('f-date', '날짜', getFm(note, '날짜') || today(), 'type="date" required') +
+          field('f-desc', '설명', getFm(note, '설명')) +
+          field('f-link', '링크 (파일을 올리면 비워 둬)', getFm(note, '링크'), 'placeholder="https://"') +
+          `<div class="adm-inline"><label class="adm-btn" for="f-file">파일 올리기</label><input id="f-file" type="file" hidden /><span id="f-file-name">${esc(getFm(note, '파일'))}</span></div>` +
+          `<label class="adm-check"><input id="f-public" type="checkbox" ${existing && getFm(note, '공개') !== 'true' ? '' : 'checked'} /> 공개</label>` +
+          '<div class="adm-actions">' +
+          (existing ? '<button type="button" class="adm-btn danger" id="del">삭제</button>' : '') +
+          '<button type="submit" class="adm-btn primary" id="save">저장</button></div></form>';
+        $('#back').addEventListener('click', () => show(kind));
+        $('#f-file').addEventListener('change', async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          say('파일 올리는 중');
+          try {
+            const name = await uploadFile(file);
+            setFm(note, '파일', name);
+            $('#f-file-name').textContent = name;
+            say('파일을 올렸어. 저장을 눌러야 반영돼.');
+          } catch (err) {
+            fail(err);
+          }
+        });
+        if (existing) {
+          let armed = false;
+          $('#del').addEventListener('click', async (e) => {
+            if (!armed) {
+              armed = true;
+              e.target.textContent = '한 번 더 누르면 삭제';
+              return;
+            }
+            busy(e.target, true);
+            try {
+              await removeNote(existing.path, existing.sha, `관리자 화면: ${NAMES[kind]} 삭제 — ${getFm(note, '제목')}`);
+              show(kind);
+              say('삭제했어. 1분쯤 뒤에 사이트에서도 내려가.');
+            } catch (err) {
+              busy(e.target, false);
+              fail(err);
+            }
+          });
+        }
+        $('#form').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const title = $('#f-title').value.trim();
+          setFm(note, '제목', title);
+          setFm(note, '날짜', $('#f-date').value);
+          setFm(note, '설명', $('#f-desc').value.trim());
+          setFm(note, '링크', $('#f-link').value.trim());
+          setFm(note, '공개', $('#f-public').checked ? 'true' : 'false');
+          const path = existing ? existing.path : `${ROOT}/${DIRS[kind]}/${fileName(title)}`;
+          busy($('#save'), true);
+          try {
+            await writeNote(path, serialize(note), existing?.sha, `관리자 화면: ${NAMES[kind]} ${existing ? '수정' : '추가'} — ${title}`);
+            show(kind);
+            saved();
+          } catch (err) {
+            busy($('#save'), false);
+            fail(err);
+          }
+        });
+      }
+
+      // 강의: 표를 줄 단위로 고친다. 표 앞뒤의 글은 그대로 둔다.
+      async function lecturesView() {
+        const file = await readNote(`${ROOT}/강의.md`);
+        const note = parse(file.text);
+        const { before, rows: found, after } = splitLectureTable(note.body);
+        const rows = [...found].sort((a, b) => (a.date < b.date ? 1 : -1));
+        const rowHtml = (r) =>
+          `<tr><td><input type="date" value="${esc(r.date)}" aria-label="날짜" /></td><td><input value="${esc(r.org)}" aria-label="기관" /></td>` +
+          `<td><input value="${esc(r.topic)}" aria-label="주제" /></td><td><input value="${esc(r.role)}" aria-label="역할" /></td>` +
+          '<td><button type="button" class="adm-link rm">빼기</button></td></tr>';
+        pane.innerHTML =
+          '<div class="adm-head"><h2>강의</h2><button type="button" class="adm-btn" id="add">줄 추가</button></div>' +
+          '<form id="form"><div class="adm-table"><table><thead><tr><th>날짜</th><th>기관</th><th>주제</th><th>역할</th><th></th></tr></thead>' +
+          `<tbody id="rows">${rows.map(rowHtml).join('')}</tbody></table></div>` +
+          '<div class="adm-actions"><button type="submit" class="adm-btn primary" id="save">저장</button></div></form>';
+        const tbody = $('#rows');
+        $('#add').addEventListener('click', () => {
+          tbody.insertAdjacentHTML('afterbegin', rowHtml({ date: today(), org: '', topic: '', role: '튜터' }));
+          tbody.querySelector('tr td:nth-child(2) input').focus();
+        });
+        tbody.addEventListener('click', (e) => {
+          if (e.target.classList.contains('rm')) e.target.closest('tr').remove();
+        });
+        $('#form').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const out = [...tbody.querySelectorAll('tr')]
+            .map((tr) => [...tr.querySelectorAll('input')].map((i) => i.value.trim()))
+            .filter((c) => c[0] && c[1])
+            .map((c) => ({ date: c[0], org: c[1], topic: c[2], role: c[3] }));
+          note.body = joinLectureTable(before, out, after);
+          busy($('#save'), true);
+          try {
+            await writeNote(file.path, serialize(note), file.sha, `관리자 화면: 강의 표 수정 (${out.length}줄)`);
+            show('lectures');
+            saved();
+          } catch (err) {
+            busy($('#save'), false);
+            fail(err);
+          }
+        });
+      }
+
+      // 프로필: 이름 · 한 줄 · 사진 · 표 줄 · 글
+      async function profileView() {
+        const file = await readNote(`${ROOT}/프로필.md`);
+        const note = parse(file.text);
+        const heading = (note.body.match(/^#\s.*$/m) || ['# 프로필'])[0];
+        const rows = [];
+        const text = [];
+        for (const line of note.body.replace(/^#\s.*$/m, '').split(/\r?\n/)) {
+          const m = line.match(/^\s*[-*]\s*([^:：]{1,12})[:：]\s*(.+)$/);
+          if (m) rows.push({ label: m[1].trim(), value: m[2].trim() });
+          else text.push(line);
+        }
+        const rowHtml = (r) =>
+          `<tr><td><input value="${esc(r.label)}" aria-label="항목" placeholder="항목" /></td><td><input value="${esc(r.value)}" aria-label="내용" placeholder="내용" /></td>` +
+          '<td><button type="button" class="adm-link rm">빼기</button></td></tr>';
+        pane.innerHTML =
+          '<div class="adm-head"><h2>프로필</h2></div><form class="adm-form" id="form">' +
+          field('f-name', '이름', getFm(note, '이름'), 'required') +
+          field('f-tag', '이름 아래 한 줄', getFm(note, '한줄')) +
+          `<div class="adm-inline"><label class="adm-btn" for="f-photo">사진 올리기</label><input id="f-photo" type="file" accept="image/*" hidden /><span id="f-photo-name">${esc(getFm(note, '사진'))}</span></div>` +
+          '<div class="adm-head sub"><span>표로 보여 줄 줄</span><button type="button" class="adm-btn" id="add">줄 추가</button></div>' +
+          `<div class="adm-table"><table><tbody id="rows">${rows.map(rowHtml).join('')}</tbody></table></div>` +
+          `<label for="f-bio">글 (비워도 됨)</label><textarea id="f-bio" rows="6">${esc(text.join('\n').trim())}</textarea>` +
+          '<div class="adm-actions"><button type="submit" class="adm-btn primary" id="save">저장</button></div></form>';
+        const tbody = $('#rows');
+        $('#add').addEventListener('click', () => {
+          tbody.insertAdjacentHTML('beforeend', rowHtml({ label: '', value: '' }));
+          tbody.querySelector('tr:last-child input').focus();
+        });
+        tbody.addEventListener('click', (e) => {
+          if (e.target.classList.contains('rm')) e.target.closest('tr').remove();
+        });
+        $('#f-photo').addEventListener('change', async (e) => {
+          const f = e.target.files[0];
+          if (!f) return;
+          say('사진 올리는 중');
+          try {
+            const name = await uploadFile(f);
+            setFm(note, '사진', name);
+            $('#f-photo-name').textContent = name;
+            say('사진을 올렸어. 저장을 눌러야 반영돼.');
+          } catch (err) {
+            fail(err);
+          }
+        });
+        $('#form').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          setFm(note, '이름', $('#f-name').value.trim());
+          setFm(note, '한줄', $('#f-tag').value.trim());
+          const list = [...tbody.querySelectorAll('tr')]
+            .map((tr) => [...tr.querySelectorAll('input')].map((i) => i.value.trim()))
+            .filter((c) => c[0] && c[1])
+            .map((c) => `- ${c[0]}: ${c[1]}`);
+          note.body = [heading, '', ...list, '', $('#f-bio').value.trim()].join('\n');
+          busy($('#save'), true);
+          try {
+            await writeNote(file.path, serialize(note), file.sha, '관리자 화면: 프로필 수정');
+            show('profile');
+            saved();
+          } catch (err) {
+            busy($('#save'), false);
+            fail(err);
+          }
+        });
+      }
+
+      // 연락처: 프로필 노트의 정보칸에 적힌다
+      async function contactsView() {
+        const file = await readNote(`${ROOT}/프로필.md`);
+        const note = parse(file.text);
+        const mail = getFm(note, '이메일') || getFm(note, '메일') || getFm(note, '문의');
+        const keys = [
+          ['이메일', mail, 'type="email"'],
+          ['주소', getFm(note, '주소'), ''],
+          ['유튜브', getFm(note, '유튜브'), 'type="url" placeholder="https://"'],
+          ['인스타그램', getFm(note, '인스타그램'), 'type="url" placeholder="https://"'],
+          ['블로그', getFm(note, '블로그'), 'type="url" placeholder="https://"'],
+          ['전화', getFm(note, '전화'), 'type="tel"'],
+          ['카카오톡', getFm(note, '카카오톡'), 'type="url" placeholder="오픈채팅 주소"'],
+        ];
+        pane.innerHTML =
+          '<div class="adm-head"><h2>연락처</h2></div><form class="adm-form" id="form">' +
+          keys.map(([k, v, attrs], i) => field(`c-${i}`, k, v, attrs)).join('') +
+          '<div class="adm-actions"><button type="submit" class="adm-btn primary" id="save">저장</button></div></form>';
+        $('#form').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          setFm(note, '메일', '');
+          setFm(note, '문의', '');
+          keys.forEach(([k], i) => setFm(note, k, $(`#c-${i}`).value.trim()));
+          busy($('#save'), true);
+          try {
+            await writeNote(file.path, serialize(note), file.sha, '관리자 화면: 연락처 수정');
+            show('contacts');
+            saved();
+          } catch (err) {
+            busy($('#save'), false);
+            fail(err);
+          }
+        });
+      }
+
+      // ── 로그인 ──
+      const loginBox = $('#login');
+      const app = $('#app');
+      function logout(msg) {
+        token = '';
+        try {
+          localStorage.removeItem('admin-token');
+          sessionStorage.removeItem('admin-token');
+        } catch {}
+        app.hidden = true;
+        $('#logout').hidden = true;
+        loginBox.hidden = false;
+        $('#login-msg').textContent = msg || '';
+      }
+      async function enter() {
+        const res = await fetch(`https://api.github.com/repos/${REPO}`, {
+          cache: 'no-store',
+          headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' },
+        });
+        if (!res.ok) throw Object.assign(new Error('로그인 실패'), { status: res.status });
+        const repo = await res.json();
+        if (!repo.permissions?.push) throw Object.assign(new Error('쓰기 권한 없음'), { status: 403 });
+        loginBox.hidden = true;
+        app.hidden = false;
+        $('#logout').hidden = false;
+        show('posts');
+      }
+      $('#login-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        token = $('#token').value.trim();
+        $('#login-msg').textContent = '확인하는 중';
+        try {
+          await enter();
+          try {
+            ($('#remember').checked ? localStorage : sessionStorage).setItem('admin-token', token);
+          } catch {}
+          $('#token').value = '';
+        } catch (err) {
+          token = '';
+          $('#login-msg').textContent =
+            err.status === 403 ? '이 열쇠에는 쓰기 권한이 없어. Contents를 Read and write로 만들었는지 봐 줘.' : '열쇠가 맞지 않아. 다시 확인해 줘.';
+        }
+      });
+      $('#logout').addEventListener('click', () => logout(''));
+      document.querySelectorAll('.adm-side button').forEach((b) => b.addEventListener('click', () => show(b.dataset.view)));
+
+      if (token) enter().catch(() => logout('다시 로그인해 줘.'));
+      else loginBox.hidden = false;
+    </script>
+
+    <style is:global>
+      .adm {
+        padding: 26px 16px 80px;
+      }
+      .win.adm-win {
+        position: static;
+        width: min(980px, 100%);
+        max-width: none;
+        max-height: none;
+        margin-inline: auto;
+      }
+      .adm-win .win-bar {
+        touch-action: auto;
+      }
+      .win.adm-login {
+        width: min(460px, 100%);
+      }
+      .adm-body {
+        display: grid;
+        grid-template-columns: 170px minmax(0, 1fr);
+        min-height: 520px;
+      }
+      .adm-side {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding: 12px 8px;
+        border-right: 1px solid var(--line);
+        background: var(--win-bar);
+      }
+      .adm-side button {
+        padding: 7px 12px;
+        border: 0;
+        border-radius: 8px;
+        background: none;
+        text-align: left;
+        cursor: pointer;
+      }
+      .adm-side button[aria-current='true'] {
+        background: var(--blue);
+        color: #fff;
+      }
+      .adm-pane {
+        padding: 18px 22px 22px;
+        min-width: 0;
+      }
+      .adm-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .adm-head h2 {
+        font-size: 20px;
+        font-weight: 700;
+      }
+      .adm-head.sub {
+        margin: 18px 0 6px;
+        color: var(--mute);
+        font-size: 13px;
+      }
+      .adm-pane label {
+        display: block;
+        margin: 14px 0 5px;
+        color: var(--mute);
+        font-size: 13px;
+      }
+      .adm-pane input:not([type='checkbox']),
+      .adm-pane textarea {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--win);
+        color: var(--ink);
+        font: inherit;
+      }
+      .adm-pane textarea {
+        line-height: 1.7;
+        resize: vertical;
+      }
+      .adm-pane input:focus,
+      .adm-pane textarea:focus {
+        outline: 2px solid var(--blue);
+        outline-offset: 0;
+        border-color: transparent;
+      }
+      .adm-two {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+      .adm-pane label.adm-check {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 16px;
+        color: var(--ink);
+        font-size: 14px;
+      }
+      .adm-inline {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 12px;
+        color: var(--mute);
+        font-size: 13px;
+      }
+      .adm-pane .adm-inline label.adm-btn {
+        display: inline-block;
+        margin: 0;
+        color: var(--ink);
+        font-size: 14px;
+      }
+      .adm-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+      }
+      .adm-btn {
+        padding: 6px 16px;
+        border: 0;
+        border-radius: 8px;
+        background: var(--seg);
+        font-size: 14px;
+        cursor: pointer;
+      }
+      .adm-btn.primary {
+        background: var(--blue);
+        color: #fff;
+      }
+      .adm-btn.danger {
+        margin-right: auto;
+        color: var(--red);
+      }
+      .adm-btn:disabled {
+        opacity: 0.5;
+      }
+      .adm-link {
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--blue);
+        font-size: 13.5px;
+        white-space: nowrap;
+        cursor: pointer;
+      }
+      .adm-list {
+        padding: 0;
+      }
+      .adm-list li {
+        padding: 0;
+      }
+      .adm-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 16px;
+        width: 100%;
+        padding: 10px 4px;
+        border: 0;
+        background: none;
+        text-align: left;
+        cursor: pointer;
+      }
+      .adm-row:hover .t {
+        color: var(--blue);
+      }
+      .rows .k.draft {
+        color: var(--red);
+      }
+      .adm-table {
+        overflow-x: auto;
+      }
+      .adm-table table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .adm-table th {
+        padding: 0 4px 6px;
+        color: var(--mute);
+        font-size: 12.5px;
+        font-weight: 400;
+        text-align: left;
+      }
+      .adm-table td {
+        padding: 3px 4px;
+        vertical-align: middle;
+      }
+      .adm-table td:first-child input[type='date'] {
+        min-width: 140px;
+      }
+      .adm-table td:nth-child(2) input {
+        min-width: 150px;
+      }
+      .adm-table td:nth-child(3) input {
+        min-width: 220px;
+      }
+      .adm-table td:nth-child(4) {
+        width: 96px;
+      }
+      .adm-table td:last-child {
+        width: 1%;
+      }
+      .adm-msg,
+      .adm-status {
+        min-height: 1.6em;
+        color: var(--mute);
+        font-size: 13.5px;
+      }
+      .adm-status {
+        padding: 10px 22px 14px;
+        border-top: 1px solid var(--line);
+      }
+      .adm-status.bad {
+        color: var(--red);
+      }
+      .adm-pane details {
+        margin-top: 18px;
+        color: var(--mute);
+        font-size: 13.5px;
+      }
+      .adm-pane summary {
+        cursor: pointer;
+      }
+      .adm-pane ol {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-top: 8px;
+        padding-left: 1.4em;
+        list-style: decimal;
+      }
+      .adm-pane ol a {
+        color: var(--blue);
+      }
+      @media (max-width: 760px) {
+        .adm-body {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .adm-side {
+          flex-direction: row;
+          flex-wrap: wrap;
+          align-items: flex-start;
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .adm-two {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .win.adm-win {
+          margin: 0 auto;
+        }
+      }
+    </style>
+  </body>
+</html>
