@@ -76,6 +76,7 @@ import '../styles/global.css';
     <script>
       // @ts-nocheck
       import { parse, getFm, setFm, serialize, splitLectureTable, joinLectureTable } from '../lib/note.js';
+      import { marked } from 'marked';
 
       const REPO = 'jeongminidayo/SecondBrain';
       const ROOT = '6_발행';
@@ -223,13 +224,27 @@ import '../styles/global.css';
           '</div>' +
           field('f-summary', '요약', getFm(note, '요약')) +
           field('f-slug', '주소 (영어로 짧게, 비워도 됨)', getFm(note, '주소'), 'placeholder="windows-drop"') +
-          `<label for="f-body">본문</label><textarea id="f-body" rows="18">${esc(note.body.trim())}</textarea>` +
+          '<div class="adm-head sub"><label for="f-body" style="margin:0">본문</label><label class="adm-check" style="margin:0"><input id="f-preview" type="checkbox" checked /> 미리보기</label></div>' +
+          `<div class="adm-split" id="split"><textarea id="f-body" rows="18">${esc(note.body.trim())}</textarea><div class="prose adm-preview" id="preview"></div></div>` +
           '<div class="adm-inline"><label class="adm-btn" for="f-image">그림 넣기</label><input id="f-image" type="file" accept="image/*" hidden /></div>' +
           `<label class="adm-check"><input id="f-public" type="checkbox" ${getFm(note, '공개') === 'true' ? 'checked' : ''} /> 공개 (끄면 초안으로만 남아)</label>` +
           '<div class="adm-actions">' +
           (existing ? '<button type="button" class="adm-btn danger" id="del">삭제</button>' : '') +
           '<button type="submit" class="adm-btn primary" id="save">저장</button></div></form>';
         $('#back').addEventListener('click', () => show('posts'));
+        // 미리보기: 사이트 글 모양 그대로. 그림은 첨부 폴더 이름으로 보여 준다.
+        const preview = $('#preview');
+        const renderPreview = () => {
+          const md = $('#f-body').value
+            .replace(/!\[\[([^\]|]+)(?:\|[^\]]*)?\]\]/g, (_, f) => `![](/attachments/${encodeURIComponent(f.trim())})`)
+            .replace(/\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|([^\]]*))?\]\]/g, (_, t, a) => (a || t).trim());
+          preview.innerHTML = marked.parse(md);
+        };
+        renderPreview();
+        $('#f-body').addEventListener('input', renderPreview);
+        $('#f-preview').addEventListener('change', (e) => {
+          $('#split').classList.toggle('solo', !e.target.checked);
+        });
         $('#f-image').addEventListener('change', async (e) => {
           const file = e.target.files[0];
           if (!file) return;
@@ -238,6 +253,7 @@ import '../styles/global.css';
             const name = await uploadFile(file);
             const ta = $('#f-body');
             ta.setRangeText(`\n![[${name}]]\n`, ta.selectionStart, ta.selectionEnd, 'end');
+            renderPreview();
             say('그림을 넣었어. 저장을 눌러야 글에 반영돼.');
           } catch (err) {
             fail(err);
@@ -635,6 +651,31 @@ import '../styles/global.css';
         outline-offset: 0;
         border-color: transparent;
       }
+      .adm-split {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        align-items: start;
+      }
+      .adm-split.solo {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .adm-split.solo .adm-preview {
+        display: none;
+      }
+      .adm-preview {
+        min-height: 200px;
+        max-height: 70vh;
+        padding: 14px 16px;
+        border: 1px dashed var(--line);
+        border-radius: 8px;
+        overflow-y: auto;
+        font-size: 15px;
+      }
+      .adm-preview h2 {
+        font-size: 18px;
+        margin-top: 1.4em;
+      }
       .adm-two {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -796,7 +837,8 @@ import '../styles/global.css';
           border-right: 0;
           border-bottom: 1px solid var(--line);
         }
-        .adm-two {
+        .adm-two,
+        .adm-split {
           grid-template-columns: minmax(0, 1fr);
         }
         .win.adm-win {
