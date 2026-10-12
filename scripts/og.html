@@ -1,14 +1,21 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8"><style>
-/* 링크 미리보기 이미지(1200x630). 카톡·인스타는 가운데를 잘라 쓰므로 내용은 가운데 정사각형 안에만 둔다. */
+/* 링크 미리보기 이미지(1200x630) = 첫 화면 잠금화면. 카톡은 가운데를 잘라 쓰므로 내용은 가운데 세로줄에만 둔다.
+   찍는 법: Chrome headless --window-size=1200,630 --screenshot=public/og.png 이 파일 */
 html,body{margin:0;width:1200px;height:630px}
-body{font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo',sans-serif;color:#1d1d1f;display:flex;align-items:center;justify-content:center;overflow:hidden;
+body{font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo',sans-serif;color:#1d1d1f;overflow:hidden;
+ display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:70px 0 74px;box-sizing:border-box;text-align:center;
  background:radial-gradient(60% 55% at 18% 22%,#f6e6dc 0,transparent 70%),radial-gradient(55% 60% at 85% 18%,#dfe3e6 0,transparent 70%),radial-gradient(70% 60% at 70% 95%,#e9dccd 0,transparent 70%),#f3ebe2}
-.win{width:520px;border-radius:28px;overflow:hidden;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.12),0 40px 90px rgba(50,35,20,.22)}
-.t{height:64px;background:#f4f4f5;border-bottom:1px solid rgba(0,0,0,.07);display:flex;align-items:center;padding:0 26px;gap:14px}
-.t i{width:22px;height:22px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.16)}
-.in{padding:58px 0 66px;text-align:center}
-h1{margin:0;font-size:112px;font-weight:700;line-height:1;letter-spacing:-.03em}
-p{margin:26px 0 0;font-size:38px;font-weight:500;color:#86868b}
+.clock span{display:block;font-size:30px;font-weight:600}
+.clock strong{display:block;font-size:150px;font-weight:700;line-height:1.02;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.user{display:flex;flex-direction:column;align-items:center;gap:12px}
+.avatar{width:112px;height:112px;border-radius:50%;overflow:hidden;background:linear-gradient(#c9c0b7,#a59a8f)}
+.avatar svg{display:block;width:100%;height:100%}
+.user b{font-size:32px;font-weight:600;margin-top:4px}
+.user small{font-size:22px;color:#86868b}
 </style></head><body>
-<div class="win"><div class="t"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div><div class="in"><h1>이정민</h1><p>AI 강의 튜터</p></div></div>
+<div class="clock"><span>minglemin01.com</span><strong>9:41</strong></div>
+<div class="user">
+ <span class="avatar"><svg viewBox="0 0 64 64"><circle cx="32" cy="25" r="11" fill="#fff"/><path d="M10 60 a22 19 0 0 1 44 0 Z" fill="#fff"/></svg></span>
+ <b>이정민</b><small>눌러서 들어가기</small>
+</div>
 </body></html>
