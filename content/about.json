@@ -17,27 +17,21 @@
       "copy": true
     },
     {
-      "label": "주소",
-      "value": "minglemin.com",
+      "label": "유튜브",
+      "value": "",
       "href": "",
       "copy": false
     },
     {
-      "label": "유튜브",
-      "value": "youtube.com/@by.mintech",
-      "href": "https://www.youtube.com/@by.mintech",
-      "copy": false
-    },
-    {
       "label": "인스타그램",
-      "value": "instagram.com/ming_indeyo",
-      "href": "https://www.instagram.com/ming_indeyo/",
+      "value": "",
+      "href": "",
       "copy": false
     },
     {
       "label": "블로그",
-      "value": "blog.naver.com/ming_indeyo",
-      "href": "https://blog.naver.com/ming_indeyo",
+      "value": "",
+      "href": "",
       "copy": false
     }
   ]

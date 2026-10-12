@@ -62,6 +62,16 @@ const ogImage = new URL('/og.png', Astro.site);
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={ogImage} />
     <meta name="twitter:card" content="summary_large_image" />
+    <!-- 방문자 통계(구글 애널리틱스). 정민만 보는 숫자이고 화면에는 안 뜬다. 관리자 화면에는 안 넣는다. -->
+    <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-WF6F1MQ5KK"></script>
+    <script is:inline>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag('js', new Date());
+      gtag('config', 'G-WF6F1MQ5KK');
+    </script>
     <script is:inline>
       try {
         var t = localStorage.getItem('theme');
