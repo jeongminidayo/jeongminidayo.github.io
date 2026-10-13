@@ -123,6 +123,7 @@ for (const n of postNotes) {
     kind: n.data['분류'] || '',
     summary: n.data['요약'] || '',
     slug,
+    source: n.data['원문'] || '',
   });
   fs.writeFileSync(path.join(OUT, 'posts', `${slug}.md`), front + '\n' + convertBody(n.body, publicPosts));
   report.posts++;

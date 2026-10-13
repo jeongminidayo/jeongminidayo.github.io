@@ -14,8 +14,10 @@ interface Props {
   ogType?: 'website' | 'article';
   /** 처음 들어올 때 잠금화면을 보여 준다(첫 화면에서만). 빼려면 index.astro에서 lock을 지우면 된다. */
   lock?: boolean;
+  /** 검색엔진에 이 페이지를 담지 말라고 알린다(블로그에서 가져온 사본 글). */
+  noindex?: boolean;
 }
-const { title, description, open = [], ogType = 'website', lock = false } = Astro.props;
+const { title, description, open = [], ogType = 'website', lock = false, noindex = false } = Astro.props;
 
 const about = getAbout();
 const posts = await getPosts();
@@ -53,6 +55,7 @@ const ogImage = new URL('/og.png?v=2', Astro.site);
     <title>{pageTitle}</title>
     <meta name="description" content={pageDesc} />
     <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, follow" />}
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="alternate" type="application/rss+xml" title={about.name} href="/rss.xml" />
     <meta property="og:type" content={ogType} />

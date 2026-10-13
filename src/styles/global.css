@@ -691,6 +691,23 @@ html.locked {
   height: auto;
   border-radius: 8px;
 }
+.prose.from-blog p {
+  /* 블로그 글은 줄을 짧게 끊어 쓴다 — 그 줄바꿈을 그대로 살린다 */
+  white-space: pre-line;
+}
+.post-source {
+  margin-top: 2.2em;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+}
+.post-source a {
+  color: var(--blue);
+}
+.post-source a:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
 .prose blockquote {
   margin-inline: 0;
   padding-left: 16px;

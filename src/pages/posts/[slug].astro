@@ -17,14 +17,21 @@ const { post, newer, older } = Astro.props;
 const { Content } = await render(post);
 ---
 
-<Desktop title={post.data.title} description={post.data.summary || undefined} ogType="article">
+<Desktop title={post.data.title} description={post.data.summary || undefined} ogType="article" noindex={!!post.data.source}>
   <Window id="post" title="글" open sheet closeHref="/">
     <article data-pagefind-body>
       <p class="post-meta" data-pagefind-ignore>
         {[post.data.kind, fmt(post.data.date)].filter(Boolean).join(' · ')}
       </p>
       <h1 class="post-title">{post.data.title}</h1>
-      <div class="prose"><Content /></div>
+      <div class:list={['prose', { 'from-blog': post.data.source }]}><Content /></div>
+      {
+        post.data.source && (
+          <p class="post-source" data-pagefind-ignore>
+            <a href={post.data.source} target="_blank" rel="noopener">네이버 블로그에서 보기 →</a>
+          </p>
+        )
+      }
     </article>
     {
       (older || newer) && (

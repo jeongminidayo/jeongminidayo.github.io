@@ -13,6 +13,8 @@ const posts = defineCollection({
     kind: z.string().optional().default(''),
     summary: z.string().optional().default(''),
     slug: z.string(),
+    // 네이버 블로그에서 가져온 글이면 원문 주소. 있으면 글 아래 원문 링크가 붙고 검색엔진에 사본을 알리지 않는다.
+    source: z.string().optional().default(''),
   }),
 });
 
