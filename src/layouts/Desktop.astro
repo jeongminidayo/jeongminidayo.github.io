@@ -4,7 +4,7 @@ import '@fontsource/ibm-plex-sans-kr/600.css';
 import '@fontsource/ibm-plex-sans-kr/700.css';
 import '../styles/global.css';
 import Window from '../components/Window.astro';
-import { getPosts, getListed, getAbout, getLectures, lectureDate, fmt, siteDescription } from '../lib/data';
+import { getPosts, getListed, getAbout, getLecturesLinked, lectureDate, fmt, siteDescription } from '../lib/data';
 
 interface Props {
   title?: string;
@@ -23,7 +23,7 @@ const about = getAbout();
 const posts = await getPosts();
 const files = await getListed('files');
 const works = await getListed('works');
-const lectures = getLectures();
+const lectures = await getLecturesLinked();
 const kinds = [...new Set(posts.map((p) => p.data.kind).filter(Boolean))];
 
 // 글이 아직 없으면 강의 창이 글 창 자리(왼쪽 위)를 쓴다.
@@ -239,7 +239,8 @@ const ogImage = new URL('/og.png?v=2', Astro.site);
               lectures.rows.map((l) => (
                 <li data-until={l.to}>
                   <span class="t">
-                    {l.org}
+                    {l.post ? <a href={`/posts/${l.post.slug}/`} title={l.post.title}>{l.org}</a> : l.org}
+                    {l.post && <span class="k">후기</span>}
                     <span class="k soon" data-upcoming hidden>예정</span>
                     <span class="desc">{[l.topic, l.role].filter(Boolean).join(', ')}</span>
                   </span>

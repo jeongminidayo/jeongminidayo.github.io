@@ -866,3 +866,12 @@ html.locked {
     }
   }
 }
+/* 후기 글이 붙은 강의는 기관 이름을 누를 수 있다는 걸 밑줄로 보여 준다 */
+.rows .t > a {
+  text-decoration: underline;
+  text-decoration-color: var(--mute);
+  text-underline-offset: 4px;
+}
+.post-source a + a {
+  margin-left: 18px;
+}

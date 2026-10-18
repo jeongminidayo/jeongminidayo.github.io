@@ -29,6 +29,14 @@ const { Content } = await render(post);
         post.data.source && (
           <p class="post-source" data-pagefind-ignore>
             <a href={post.data.source} target="_blank" rel="noopener">네이버 블로그에서 보기 →</a>
+            {post.data.threads && <a href={post.data.threads} target="_blank" rel="noopener">스레드에서 보기 →</a>}
+          </p>
+        )
+      }
+      {
+        !post.data.source && post.data.threads && (
+          <p class="post-source" data-pagefind-ignore>
+            <a href={post.data.threads} target="_blank" rel="noopener">스레드에서 보기 →</a>
           </p>
         )
       }

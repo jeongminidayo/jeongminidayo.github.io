@@ -15,6 +15,10 @@ const posts = defineCollection({
     slug: z.string(),
     // 네이버 블로그에서 가져온 글이면 원문 주소. 있으면 글 아래 원문 링크가 붙고 검색엔진에 사본을 알리지 않는다.
     source: z.string().optional().default(''),
+    // 노트 정보칸 `강의:` — 이 글을 잇는 강의 기관 이름(제목으로 못 찾을 때만 적는다).
+    lecture: z.string().optional().default(''),
+    // 본문에 스레드 글 주소가 있으면 그 주소. 글 아래 「스레드에서 보기」가 붙는다.
+    threads: z.string().optional().default(''),
   }),
 });
 

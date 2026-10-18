@@ -124,6 +124,8 @@ for (const n of postNotes) {
     summary: n.data['요약'] || '',
     slug,
     source: n.data['원문'] || '',
+    lecture: n.data['강의'] || '',
+    threads: (n.body.match(/https?:\/\/(?:www\.)?threads\.(?:net|com)\/[^\s)\]]+/) || [''])[0],
   });
   fs.writeFileSync(path.join(OUT, 'posts', `${slug}.md`), front + '\n' + convertBody(n.body, publicPosts));
   report.posts++;
