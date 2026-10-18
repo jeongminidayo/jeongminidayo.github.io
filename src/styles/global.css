@@ -875,3 +875,76 @@ html.locked {
 .post-source a + a {
   margin-left: 18px;
 }
+
+/* 강의 창 — 대표님 사이트(paperlogy.blog/lectures) 목록 모양을 따른다(2026-10-18 정민) */
+.lec {
+  padding: 4px 16px 12px;
+}
+.lec-year {
+  margin: 14px 0 4px;
+  color: var(--mute);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+.lec ul li {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding-block: 7px;
+}
+.lec-d {
+  flex: none;
+  width: 78px;
+  color: var(--mute);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.lec-t {
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.lec-org {
+  font-weight: 600;
+}
+.lec-org > a {
+  text-decoration: underline;
+  text-decoration-color: var(--mute);
+  text-underline-offset: 4px;
+}
+.lec-org > a:hover {
+  color: var(--blue);
+}
+.lec-sep {
+  margin-inline: 6px;
+  color: var(--mute);
+}
+.lec-place {
+  color: var(--mute);
+  font-size: 12.5px;
+}
+.lec-topic {
+  opacity: 0.75;
+}
+.lec-k {
+  margin-left: 8px;
+  color: var(--mute);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.lec-k.soon {
+  color: var(--blue);
+}
+@media (max-width: 560px) {
+  .lec ul li {
+    gap: 10px;
+  }
+  .lec-d {
+    width: 70px;
+    font-size: 12.5px;
+  }
+}

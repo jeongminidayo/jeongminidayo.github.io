@@ -4,7 +4,7 @@ import '@fontsource/ibm-plex-sans-kr/600.css';
 import '@fontsource/ibm-plex-sans-kr/700.css';
 import '../styles/global.css';
 import Window from '../components/Window.astro';
-import { getPosts, getListed, getAbout, getLecturesLinked, lectureDate, fmt, siteDescription } from '../lib/data';
+import { getPosts, getListed, getAbout, getLecturesLinked, lecturesByYear, fmt, siteDescription } from '../lib/data';
 
 interface Props {
   title?: string;
@@ -234,21 +234,33 @@ const ogImage = new URL('/og.png?v=2', Astro.site);
           open={isOpen('lectures')}
           {...(only('lectures') ? MAIN : lecturesMain ? place(195, 58, 570, 372) : place(20, 130, 440, 300))}
         >
-          <ul class="rows">
+          <div class="lec">
             {
-              lectures.rows.map((l) => (
-                <li data-until={l.to}>
-                  <span class="t">
-                    {l.post ? <a href={`/posts/${l.post.slug}/`} title={l.post.title}>{l.org}</a> : l.org}
-                    {l.post && <span class="k">후기</span>}
-                    <span class="k soon" data-upcoming hidden>예정</span>
-                    <span class="desc">{[l.topic, l.role].filter(Boolean).join(', ')}</span>
-                  </span>
-                  <span class="d">{lectureDate(l)}</span>
-                </li>
+              lecturesByYear(lectures.rows).map((y) => (
+                <section>
+                  <h3 class="lec-year">{y.year}</h3>
+                  <ul>
+                    {y.rows.map((l) => (
+                      <li data-until={l.to}>
+                        <time class="lec-d">{fmt(l.from)}</time>
+                        <span class="lec-t">
+                          <span class="lec-org">
+                            {l.post ? <a href={`/posts/${l.post.slug}/`} title={l.post.title}>{l.org}</a> : l.org}
+                          </span>
+                          {l.place && <span class="lec-sep" aria-hidden="true">·</span>}
+                          {l.place && <span class="lec-place">{l.place}</span>}
+                          {l.topic && <span class="lec-sep" aria-hidden="true">·</span>}
+                          {l.topic && <span class="lec-topic">{l.topic}</span>}
+                          {l.post && <span class="lec-k">후기</span>}
+                          <span class="lec-k soon" data-upcoming hidden>예정</span>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
               ))
             }
-          </ul>
+          </div>
         </Window>
 
         <Window id="files" title="자료실" open={isOpen('files')} {...(only('files') ? MAIN : place(650, 470, 310, 260))}>

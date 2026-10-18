@@ -39,29 +39,20 @@ export function siteDescription(about: About) {
   return [about.tagline, ...about.rows.map((r) => `${r.label} ${r.value}`)].filter(Boolean).join(' · ');
 }
 
-type LectureRow = { date: string; org: string; topic: string; role: string };
+type LectureRow = { date: string; org: string; topic: string; role: string; place?: string };
 export type Lecture = {
-  from: string; to: string; org: string; topic: string; role: string; days: number;
+  from: string; to: string; org: string; topic: string; role: string; place: string; days: number;
   /** 이 강의 후기 글. 있으면 강의 창에서 기관 이름을 누르면 그 글로 간다. */
   post?: { slug: string; title: string };
 };
 
-// 같은 기관에서 이어진 날짜는 한 줄로 묶는다(이틀 연속 강의 → "09.08 ~ 09.09").
+// 대표님 사이트(paperlogy.blog/lectures)처럼 강의한 날마다 한 줄씩 둔다 — 이어진 날도 묶지 않는다(2026-10-18 정민).
 export function getLectures(): { rows: Lecture[]; total: number } {
   const raw: LectureRow[] = read('lectures.json');
-  const asc = [...raw].sort((a, b) => (a.date < b.date ? -1 : 1));
-  const rows: Lecture[] = [];
-  for (const r of asc) {
-    const last = rows[rows.length - 1];
-    const gap = last ? (Date.parse(r.date) - Date.parse(last.to)) / 86400000 : Infinity;
-    if (last && last.org === r.org && last.topic === r.topic && gap <= 1) {
-      last.to = r.date;
-      last.days++;
-    } else {
-      rows.push({ from: r.date, to: r.date, org: r.org, topic: r.topic, role: r.role, days: 1 });
-    }
-  }
-  return { rows: rows.reverse(), total: raw.length };
+  const rows: Lecture[] = [...raw]
+    .sort((a, b) => (a.date < b.date ? 1 : -1))
+    .map((r) => ({ from: r.date, to: r.date, org: r.org, topic: r.topic, role: r.role, place: r.place || '', days: 1 }));
+  return { rows, total: raw.length };
 }
 
 // 강의 후기 글 찾기 — 글 제목에 기관 이름과 강의 낱말(강의·튜터·출강·특강·수업·교육)이 같이 들어 있으면 그 강의 줄에 잇는다.
@@ -110,7 +101,16 @@ export async function getLecturesLinked() {
   return lectures;
 }
 
-export const lectureDate = (l: Lecture) => (l.from === l.to ? fmt(l.from) : `${fmt(l.from)} ~ ${fmt(l.to).slice(5)}`);
+// 강의 창을 연도별로 나눈다(최근 연도가 위).
+export const lecturesByYear = (rows: Lecture[]) => {
+  const years: { year: string; rows: Lecture[] }[] = [];
+  for (const l of rows) {
+    const y = l.from.slice(0, 4);
+    if (years.at(-1)?.year !== y) years.push({ year: y, rows: [] });
+    years.at(-1)!.rows.push(l);
+  }
+  return years;
+};
 
 export async function getListed(name: 'files' | 'works') {
   // 비어 있는 묶음을 부르면 경고가 뜨므로 파일이 있을 때만 읽는다.

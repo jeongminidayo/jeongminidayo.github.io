@@ -153,7 +153,7 @@ for (const [folder, outDir, key] of [['자료', 'files', 'files'], ['만든것',
   }
 }
 
-// 3) 강의 — 표(날짜 | 기관 | 주제 | 역할)를 읽는다
+// 3) 강의 — 표(날짜 | 기관 | 주제 | 역할 | 장소)를 읽는다. 장소 칸은 없어도 된다
 const lectures = [];
 const lectureFile = path.join(SRC, '강의.md');
 if (fs.existsSync(lectureFile)) {
@@ -164,7 +164,7 @@ if (fs.existsSync(lectureFile)) {
       const cells = line.split('|').slice(1, -1).map((c) => c.trim());
       if (cells.length < 2 || /^-+$/.test(cells[0].replace(/[:\s]/g, '')) || cells[0] === '날짜') continue;
       if (!/\d{4}-\d{2}-\d{2}/.test(cells[0])) continue;
-      lectures.push({ date: cells[0], org: cells[1], topic: cells[2] || '', role: cells[3] || '' });
+      lectures.push({ date: cells[0], org: cells[1], topic: cells[2] || '', role: cells[3] || '', place: cells[4] || '' });
     }
   } else {
     report.skipped.push('강의.md');

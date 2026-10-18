@@ -52,17 +52,17 @@ export function splitLectureTable(body) {
     .slice(first, last + 1)
     .map((l) => l.split('|').slice(1, -1).map((c) => c.trim()))
     .filter((c) => /^\d{4}-\d{2}-\d{2}$/.test(c[0] || ''))
-    .map((c) => ({ date: c[0], org: c[1] || '', topic: c[2] || '', role: c[3] || '' }));
+    .map((c) => ({ date: c[0], org: c[1] || '', topic: c[2] || '', role: c[3] || '', place: c[4] || '' }));
   return { before: lines.slice(0, first), rows, after: lines.slice(last + 1) };
 }
 
 export const joinLectureTable = (before, rows, after) =>
   [
     ...before,
-    '| 날짜 | 기관 | 주제 | 역할 |',
-    '|---|---|---|---|',
+    '| 날짜 | 기관 | 주제 | 역할 | 장소 |',
+    '|---|---|---|---|---|',
     ...[...rows]
       .sort((a, b) => (a.date > b.date ? 1 : -1))
-      .map((r) => `| ${[r.date, r.org, r.topic, r.role].map((c) => String(c).replace(/\|/g, '/')).join(' | ')} |`),
+      .map((r) => `| ${[r.date, r.org, r.topic, r.role, r.place || ''].map((c) => String(c).replace(/\|/g, '/')).join(' | ')} |`),
     ...after,
   ].join('\n');

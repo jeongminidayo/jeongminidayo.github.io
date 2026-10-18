@@ -378,16 +378,17 @@ import '../styles/global.css';
         const rows = [...found].sort((a, b) => (a.date < b.date ? 1 : -1));
         const rowHtml = (r) =>
           `<tr><td><input type="date" value="${esc(r.date)}" aria-label="날짜" /></td><td><input value="${esc(r.org)}" aria-label="기관" /></td>` +
+          `<td><input value="${esc(r.place || '')}" aria-label="장소" /></td>` +
           `<td><input value="${esc(r.topic)}" aria-label="주제" /></td><td><input value="${esc(r.role)}" aria-label="역할" /></td>` +
           '<td><button type="button" class="adm-link rm">빼기</button></td></tr>';
         pane.innerHTML =
           '<div class="adm-head"><h2>강의</h2><button type="button" class="adm-btn" id="add">줄 추가</button></div>' +
-          '<form id="form"><div class="adm-table"><table><thead><tr><th>날짜</th><th>기관</th><th>주제</th><th>역할</th><th></th></tr></thead>' +
+          '<form id="form"><div class="adm-table"><table><thead><tr><th>날짜</th><th>기관</th><th>장소</th><th>주제</th><th>역할</th><th></th></tr></thead>' +
           `<tbody id="rows">${rows.map(rowHtml).join('')}</tbody></table></div>` +
           '<div class="adm-actions"><button type="submit" class="adm-btn primary" id="save">저장</button></div></form>';
         const tbody = $('#rows');
         $('#add').addEventListener('click', () => {
-          tbody.insertAdjacentHTML('afterbegin', rowHtml({ date: today(), org: '', topic: '', role: '튜터' }));
+          tbody.insertAdjacentHTML('afterbegin', rowHtml({ date: today(), org: '', place: '', topic: '', role: '튜터' }));
           tbody.querySelector('tr td:nth-child(2) input').focus();
         });
         tbody.addEventListener('click', (e) => {
@@ -398,7 +399,7 @@ import '../styles/global.css';
           const out = [...tbody.querySelectorAll('tr')]
             .map((tr) => [...tr.querySelectorAll('input')].map((i) => i.value.trim()))
             .filter((c) => c[0] && c[1])
-            .map((c) => ({ date: c[0], org: c[1], topic: c[2], role: c[3] }));
+            .map((c) => ({ date: c[0], org: c[1], place: c[2], topic: c[3], role: c[4] }));
           note.body = joinLectureTable(before, out, after);
           busy($('#save'), true);
           try {
