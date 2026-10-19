@@ -4,7 +4,7 @@ import '@fontsource/ibm-plex-sans-kr/600.css';
 import '@fontsource/ibm-plex-sans-kr/700.css';
 import '../styles/global.css';
 import Window from '../components/Window.astro';
-import { getPosts, getListed, getAbout, getLecturesLinked, lecturesByYear, fmt, siteDescription } from '../lib/data';
+import { getPosts, getListed, getAbout, aboutGroups, getLecturesLinked, lecturesByYear, fmt, siteDescription } from '../lib/data';
 
 interface Props {
   title?: string;
@@ -197,10 +197,10 @@ const ogImage = new URL('/og.png?v=2', Astro.site);
             {
               about.rows.length > 0 && (
                 <dl>
-                  {about.rows.map((r) => (
+                  {aboutGroups(about.rows).map((g) => (
                     <div>
-                      <dt>{r.label}</dt>
-                      <dd>{r.value}</dd>
+                      <dt>{g.label}</dt>
+                      {g.values.map((v) => <dd>{v}</dd>)}
                     </div>
                   ))}
                 </dl>

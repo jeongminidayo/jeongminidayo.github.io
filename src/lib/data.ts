@@ -32,11 +32,22 @@ export type About = {
 };
 export const getAbout = (): About => read('about.json');
 
+// 프로필 표: 이름이 같은 줄이 이어지면 한 칸으로 묶는다(사업 참여 셋을 선 없이 한 칸에 — 정민 2026-10-19).
+export function aboutGroups(rows: About['rows']) {
+  const groups: { label: string; values: string[] }[] = [];
+  for (const r of rows) {
+    const last = groups[groups.length - 1];
+    if (last && last.label === r.label) last.values.push(r.value);
+    else groups.push({ label: r.label, values: [r.value] });
+  }
+  return groups;
+}
+
 // 검색 결과·공유 미리보기·RSS에 쓰는 한 줄 설명. 프로필 글이 있으면 그 글, 없으면 이름 아래 한 줄과 표 줄로 만든다.
 export function siteDescription(about: About) {
   const text = about.body.replace(/\s+/g, ' ').trim();
   if (text) return text;
-  return [about.tagline, ...about.rows.map((r) => `${r.label} ${r.value}`)].filter(Boolean).join(' · ');
+  return [about.tagline, ...aboutGroups(about.rows).map((g) => `${g.label} ${g.values.join(', ')}`)].filter(Boolean).join(' · ');
 }
 
 type LectureRow = { date: string; org: string; topic: string; role: string; place?: string };

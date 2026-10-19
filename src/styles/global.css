@@ -374,7 +374,7 @@ button {
 .profile dl div {
   display: grid;
   grid-template-columns: 64px minmax(0, 1fr);
-  gap: 12px;
+  gap: 6px 12px;
   padding-block: 9px;
   border-top: 1px solid var(--line);
 }
@@ -382,7 +382,9 @@ button {
   color: var(--mute);
   font-size: 13px;
 }
+/* 같은 이름 줄이 묶인 칸: 내용만 오른쪽에 차례로 쌓는다 */
 .profile dd {
+  grid-column: 2;
   margin: 0;
 }
 .profile .bio {
