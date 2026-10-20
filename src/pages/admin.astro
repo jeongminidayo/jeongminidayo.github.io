@@ -144,13 +144,24 @@ import '../styles/global.css';
         }
       };
       async function uploadFile(file) {
-        const clean = file.name.replace(/[\\/?#%*:|"<>\s]+/g, '-');
+        const clean = file.name.normalize('NFC').replace(/[\\/?#%*:|"<>\s]+/g, '-');
         const name = `${today()}-${Date.now().toString(36)}-${clean}`;
         const bytes = new Uint8Array(await file.arrayBuffer());
         let bin = '';
         for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
         await gh(`${ROOT}/첨부/${name}`, { method: 'PUT', body: JSON.stringify({ message: `관리자 화면: 첨부 ${name}`, content: btoa(bin), branch: BRANCH }) });
         return name;
+      }
+      // 프로필 사진은 원본이 수 MB라 첫 화면이 늦게 뜬다 — 긴 변 800px JPEG로 줄여 올린다
+      async function shrinkImage(file, max = 800) {
+        const img = await createImageBitmap(file);
+        const k = Math.min(1, max / Math.max(img.width, img.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * k);
+        c.height = Math.round(img.height * k);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        const blob = await new Promise((r) => c.toBlob(r, 'image/jpeg', 0.86));
+        return new File([blob], 'profile.jpg', { type: 'image/jpeg' });
       }
 
       // ── 화면 ──
@@ -450,7 +461,7 @@ import '../styles/global.css';
           if (!f) return;
           say('사진 올리는 중');
           try {
-            const name = await uploadFile(f);
+            const name = await uploadFile(await shrinkImage(f));
             setFm(note, '사진', name);
             $('#f-photo-name').textContent = name;
             say('사진을 올렸어. 저장을 눌러야 반영돼.');
