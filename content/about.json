@@ -6,11 +6,11 @@
   "rows": [
     {
       "label": "소속",
-      "value": "페이퍼로지"
+      "value": "[페이퍼로지](https://paperlogy.blog)"
     },
     {
       "label": "AI 강의",
-      "value": "AI·AX 강사 · 기업·기관 출강 (2026.08~)"
+      "value": "AI·AX 강사 · 기업·기관 출강 {강의 횟수}회 (2026.08~)"
     },
     {
       "label": "SNS 마케팅",
