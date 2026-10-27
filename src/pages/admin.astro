@@ -444,6 +444,7 @@ import '../styles/global.css';
           field('f-name', '이름', getFm(note, '이름'), 'required') +
           field('f-tag', '이름 아래 한 줄', getFm(note, '한줄')) +
           `<div class="adm-inline"><label class="adm-btn" for="f-photo">사진 올리기</label><input id="f-photo" type="file" accept="image/*" hidden /><span id="f-photo-name">${esc(getFm(note, '사진'))}</span></div>` +
+          `<div class="adm-inline"><label class="adm-btn" for="f-resume">이력서 PDF 올리기</label><input id="f-resume" type="file" accept="application/pdf" hidden /><span id="f-resume-name">${esc(getFm(note, '이력서'))}</span></div>` +
           '<div class="adm-head sub"><span>표로 보여 줄 줄</span><button type="button" class="adm-btn" id="add">줄 추가</button></div>' +
           `<div class="adm-table"><table><tbody id="rows">${rows.map(rowHtml).join('')}</tbody></table></div>` +
           `<label for="f-bio">글 (비워도 됨)</label><textarea id="f-bio" rows="6">${esc(text.join('\n').trim())}</textarea>` +
@@ -465,6 +466,20 @@ import '../styles/global.css';
             setFm(note, '사진', name);
             $('#f-photo-name').textContent = name;
             say('사진을 올렸어. 저장을 눌러야 반영돼.');
+          } catch (err) {
+            fail(err);
+          }
+        });
+        // 이력서는 PDF 그대로 올린다(사진처럼 줄이지 않는다). 올리면 프로필 창 맨 아래 「이력서 PDF」 단추가 그 파일을 연다.
+        $('#f-resume').addEventListener('change', async (e) => {
+          const f = e.target.files[0];
+          if (!f) return;
+          say('이력서 올리는 중');
+          try {
+            const name = await uploadFile(f);
+            setFm(note, '이력서', name);
+            $('#f-resume-name').textContent = name;
+            say('이력서를 올렸어. 저장을 눌러야 반영돼.');
           } catch (err) {
             fail(err);
           }

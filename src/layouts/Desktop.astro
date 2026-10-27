@@ -207,6 +207,13 @@ const ogImage = new URL('/og.png?v=2', Astro.site);
               )
             }
             {paragraphs.length > 0 && <div class="bio">{paragraphs.map((p) => <p>{p}</p>)}</div>}
+            {
+              about.resume && (
+                <a class="resume" href={about.resume} target="_blank" rel="noopener">
+                  이력서 PDF
+                </a>
+              )
+            }
           </div>
         </Window>
 

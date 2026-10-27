@@ -26,6 +26,8 @@ export type About = {
   name: string;
   tagline: string;
   photo: string;
+  /** 이력서 PDF 주소. 없으면 단추가 안 뜬다. */
+  resume: string;
   rows: { label: string; value: string }[];
   body: string;
   contacts: Contact[];

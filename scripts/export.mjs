@@ -175,7 +175,7 @@ fs.writeFileSync(path.join(OUT, 'lectures.json'), JSON.stringify(lectures, null,
 report.lectures = lectures.length;
 
 // 4) 프로필 — 프로필 창과 연락 창에 쓰인다. (예전 이름 소개.md도 읽는다)
-const about = { name: '이정민', tagline: '', photo: '', rows: [], body: '', contacts: [] };
+const about = { name: '이정민', tagline: '', photo: '', resume: '', rows: [], body: '', contacts: [] };
 const aboutFile = ['프로필.md', '소개.md'].map((f) => path.join(SRC, f)).find((f) => fs.existsSync(f));
 if (aboutFile) {
   const n = parseNote(fs.readFileSync(aboutFile, 'utf8'));
@@ -183,6 +183,8 @@ if (aboutFile) {
     about.name = n.data['이름'] || about.name;
     about.tagline = n.data['한줄'] || '';
     about.photo = (n.data['사진'] && useAttachment(n.data['사진'])) || '';
+    // 이력서 PDF: 정보칸 `이력서: 파일.pdf`를 적으면 프로필 창 맨 아래에 「이력서 PDF」 단추가 생긴다(2026-10-27 정민).
+    about.resume = (n.data['이력서'] && useAttachment(n.data['이력서'])) || '';
 
     // 연락 창: 이메일 · 주소 · 유튜브 · 인스타그램 · 블로그 순서. 전화·카카오톡은 적었을 때만 뒤에 붙는다.
     // 유튜브·인스타그램·블로그는 주소를 아직 안 적었으면 "준비 중"으로 뜬다.

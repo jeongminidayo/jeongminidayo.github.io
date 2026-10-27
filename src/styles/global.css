@@ -397,6 +397,20 @@ button {
 .profile .bio p + p {
   margin-top: 4px;
 }
+/* 이력서 PDF 단추: 프로필 창 맨 아래, 새 탭으로 연다 */
+.profile .resume {
+  margin-top: 16px;
+  padding: 6px 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 13px;
+  text-decoration: none;
+  color: inherit;
+  background: var(--seg);
+}
+.profile .resume:hover {
+  color: var(--blue);
+}
 .avatar {
   display: block;
   flex: none;
