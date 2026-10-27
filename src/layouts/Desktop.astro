@@ -195,6 +195,13 @@ const ogImage = new URL('/og.png?v=2', Astro.site);
             <h2>{about.name}</h2>
             {about.tagline && <p class="tag">{about.tagline}</p>}
             {
+              about.resume && (
+                <a class="resume" href={about.resume} target="_blank" rel="noopener">
+                  이력서 PDF
+                </a>
+              )
+            }
+            {
               about.rows.length > 0 && (
                 <dl>
                   {aboutGroups(about.rows).map((g) => (
@@ -207,13 +214,6 @@ const ogImage = new URL('/og.png?v=2', Astro.site);
               )
             }
             {paragraphs.length > 0 && <div class="bio">{paragraphs.map((p) => <p>{p}</p>)}</div>}
-            {
-              about.resume && (
-                <a class="resume" href={about.resume} target="_blank" rel="noopener">
-                  이력서 PDF
-                </a>
-              )
-            }
           </div>
         </Window>
 
