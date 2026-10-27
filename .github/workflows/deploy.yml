@@ -1,9 +1,13 @@
 # main에 올라오면 사이트를 만들어 GitHub Pages에 띄운다.
+# 매일 한국 시간 0시 10분에도 다시 짓는다 — 프로필의 강의 횟수가 "오늘까지 한 강의"를 세서,
+# 예정 강의 날짜가 지나면 숫자가 혼자 올라가야 한다(2026-10-27 정민 "강의 횟수 업뎃 니가 알아서").
 name: 사이트 배포
 
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: '10 15 * * *'
   workflow_dispatch:
 
 permissions:
