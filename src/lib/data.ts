@@ -32,7 +32,37 @@ export type About = {
   body: string;
   contacts: Contact[];
 };
-export const getAbout = (): About => read('about.json');
+// 프로필 표 줄의 `{강의 횟수}`는 강의 표에서 센 지난 강의 수로 바뀐다 — 숫자를 손으로 고칠 일이 없게(정민 2026-10-27).
+export const getAbout = (): About => {
+  const about: About = read('about.json');
+  const n = String(lectureCount());
+  about.rows = about.rows.map((r) => ({ ...r, value: r.value.replaceAll('{강의 횟수}', n) }));
+  return about;
+};
+
+// 표 줄 안의 `[글자](주소)`를 링크로 바꾼다(소속 페이퍼로지 → 대표님 사이트, 정민 2026-10-27). 다른 HTML은 글자로만 나온다.
+const escapeHtml = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+export function rowHtml(v: string) {
+  return escapeHtml(v).replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/[^\s)]*)\)/g, (_, t, u) =>
+    `<a href="${u}" target="_blank" rel="noopener">${t}</a>`,
+  );
+}
+const plainRow = (v: string) => v.replace(/\[([^\]]+)\]\([^\s)]+\)/g, '$1');
+
+// 지난 강의 수: 오늘까지 한 것만, 같은 기관에 이어진 날은 한 건으로 센다.
+export function lectureCount() {
+  const today = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10); // 한국 시간 기준
+  const raw: LectureRow[] = read('lectures.json');
+  const rows = raw.filter((r) => r.date <= today).sort((a, b) => (a.date < b.date ? -1 : 1));
+  let n = 0;
+  let prev: LectureRow | null = null;
+  for (const r of rows) {
+    const next = prev && prev.org === r.org && (Date.parse(r.date) - Date.parse(prev.date)) / 86400000 === 1;
+    if (!next) n += 1;
+    prev = r;
+  }
+  return n;
+}
 
 // 프로필 표: 이름이 같은 줄이 이어지면 한 칸으로 묶는다(사업 참여 셋을 선 없이 한 칸에 — 정민 2026-10-19).
 export function aboutGroups(rows: About['rows']) {
@@ -49,7 +79,7 @@ export function aboutGroups(rows: About['rows']) {
 export function siteDescription(about: About) {
   const text = about.body.replace(/\s+/g, ' ').trim();
   if (text) return text;
-  return [about.tagline, ...aboutGroups(about.rows).map((g) => `${g.label} ${g.values.join(', ')}`)].filter(Boolean).join(' · ');
+  return [about.tagline, ...aboutGroups(about.rows).map((g) => `${g.label} ${g.values.map(plainRow).join(', ')}`)].filter(Boolean).join(' · ');
 }
 
 type LectureRow = { date: string; org: string; topic: string; role: string; place?: string };

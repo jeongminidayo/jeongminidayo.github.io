@@ -387,6 +387,14 @@ button {
   grid-column: 2;
   margin: 0;
 }
+/* 표 줄 안의 링크(소속 페이퍼로지 등)는 이력서 링크와 같은 파랑 */
+.profile dd a {
+  color: var(--blue);
+  text-decoration: none;
+}
+.profile dd a:hover {
+  text-decoration: underline;
+}
 .profile .bio {
   align-self: stretch;
   margin-top: 14px;
