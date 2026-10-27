@@ -195,15 +195,16 @@ const ogImage = new URL('/og.png?v=2', Astro.site);
             <h2>{about.name}</h2>
             {about.tagline && <p class="tag">{about.tagline}</p>}
             {
-              about.resume && (
-                <a class="resume" href={about.resume} target="_blank" rel="noopener">
-                  이력서 PDF
-                </a>
-              )
-            }
-            {
-              about.rows.length > 0 && (
+              (about.rows.length > 0 || about.resume) && (
                 <dl>
+                  {about.resume && (
+                    <div>
+                      <dt>이력서</dt>
+                      <dd>
+                        <a class="resume" href={about.resume} target="_blank" rel="noopener">PDF 보기 ↗</a>
+                      </dd>
+                    </div>
+                  )}
                   {aboutGroups(about.rows).map((g) => (
                     <div>
                       <dt>{g.label}</dt>

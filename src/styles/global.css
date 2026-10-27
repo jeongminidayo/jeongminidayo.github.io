@@ -397,19 +397,13 @@ button {
 .profile .bio p + p {
   margin-top: 4px;
 }
-/* 이력서 PDF 단추: 이름·한 줄 바로 아래(정민 2026-10-27), 새 탭으로 연다 */
+/* 이력서: 표 첫 줄에 링크로(정민 2026-10-27, 알약 단추는 커 보여서 뺌). 새 탭으로 연다 */
 .profile .resume {
-  margin-top: 12px;
-  padding: 6px 16px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  font-size: 13px;
+  color: var(--blue);
   text-decoration: none;
-  color: inherit;
-  background: var(--seg);
 }
 .profile .resume:hover {
-  color: var(--blue);
+  text-decoration: underline;
 }
 .avatar {
   display: block;
